@@ -50,7 +50,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: false
       },
-
+      notes: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
       attendeeCount: {
         type: DataTypes.INTEGER,
         allowNull: false,
