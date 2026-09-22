@@ -45,11 +45,7 @@ async function getUserById(req, res, next) {
 
 async function createUser(req, res, next) {
   try {
-    const {
-      fullName,
-      email,
-      role
-    } = req.body;
+    const {fullName,email,role} = req.body;
 
     if (!fullName || !email) {
       return res.status(400).json({

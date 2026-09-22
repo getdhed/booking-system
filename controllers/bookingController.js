@@ -1,9 +1,4 @@
-const {
-  Booking,
-  User,
-  Room,
-  Equipment
-} = require('../models');
+const {Booking,User,Room,Equipment} = require('../models');
 
 const bookingInclude = [
   {
@@ -65,15 +60,7 @@ async function getBookingById(req, res, next) {
 
 async function createBooking(req, res, next) {
   try {
-    const {
-      userId,
-      roomId,
-      startTime,
-      endTime,
-      purpose,
-      attendeeCount,
-      status
-    } = req.body;
+    const {userId,roomId,startTime,endTime,purpose,attendeeCount,status} = req.body;
 
     if (
       userId == null ||
@@ -126,15 +113,7 @@ async function updateBooking(req, res, next) {
       });
     }
 
-    const {
-      userId,
-      roomId,
-      startTime,
-      endTime,
-      purpose,
-      attendeeCount,
-      status
-    } = req.body;
+    const {userId,roomId,startTime,endTime,purpose,attendeeCount, status} = req.body;
 
     if (
       userId == null ||

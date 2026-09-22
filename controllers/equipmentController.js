@@ -38,13 +38,7 @@ async function getEquipmentById(req, res, next) {
 
 async function createEquipment(req, res, next) {
   try {
-    const {
-      name,
-      type,
-      totalQuantity,
-      description,
-      isActive
-    } = req.body;
+    const {name,type,totalQuantity,description,isActive} = req.body;
 
     if (
       !name ||
