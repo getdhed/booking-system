@@ -32,6 +32,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true
       },
+      
+      refreshToken: {
+        type: DataTypes.TEXT,
+        allowNull: true
+      },
 
       role: {
         type: DataTypes.STRING,
@@ -41,6 +46,7 @@ module.exports = (sequelize, DataTypes) => {
           isIn: [['user', 'admin']]
         }
       }
+      
     },
     {
       sequelize,
