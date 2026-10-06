@@ -21,7 +21,7 @@ async function startServer() {
     await sequelize.authenticate();
     console.log('бд подключена!');
     app.listen(port, () => {
-      console.log(`Server running on http://localhost:${port}`);
+      console.log(`сервер запущен на http://localhost:${port}`);
     });
   } catch (error) {
     console.error('не удалось установить соединение с бд:', error);

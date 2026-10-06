@@ -38,15 +38,7 @@ async function getRoomById(req, res, next) {
 
 async function createRoom(req, res, next) {
   try {
-    const {
-      name,
-      roomNumber,
-      location,
-      floor,
-      capacity,
-      description,
-      isActive
-    } = req.body;
+    const {name,roomNumber,location,floor,capacity,description,isActive} = req.body;
 
     if (
       !name ||
@@ -76,8 +68,4 @@ async function createRoom(req, res, next) {
   }
 }
 
-module.exports = {
-  getAllRooms,
-  getRoomById,
-  createRoom
-};
+module.exports = {getAllRooms,getRoomById,createRoom};
