@@ -1,5 +1,5 @@
 const express = require('express');
-
+const authorization = require('../middlewares/authorization');
 const {
   getAllBookings,
   getBookingById,
@@ -9,6 +9,7 @@ const {
 } = require('../controllers/bookingController');
 
 const router = express.Router();
+router.use(authorization);
 
 router.get('/', getAllBookings);
 router.get('/:id', getBookingById);

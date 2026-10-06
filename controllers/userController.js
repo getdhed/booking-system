@@ -4,7 +4,10 @@ async function getAllUsers(req, res, next) {
   try {
     const users = await User.findAll({
       attributes: {
-        exclude: ['passwordHash']
+       exclude: [
+      'passwordHash',
+      'refreshToken'
+]
       },
       order: [['id', 'ASC']]
     });
@@ -27,7 +30,10 @@ async function getUserById(req, res, next) {
 
     const user = await User.findByPk(id, {
       attributes: {
-        exclude: ['passwordHash']
+       exclude: [
+      'passwordHash',
+      'refreshToken'
+]
       }
     });
 
@@ -63,7 +69,7 @@ async function createUser(req, res, next) {
     const result = user.toJSON();
 
     delete result.passwordHash;
-
+    delete result.refreshToken;
     res.status(201).json(result);
   } catch (error) {
     next(error);
