@@ -100,5 +100,8 @@ input:focus, textarea:focus, select:focus {
   .panel { padding: 18px; }
 }
 
-/* При добавлении и редактировании показываем отдельную форму. */
+/* Добавление открывается отдельно, редактирование — в выбранной карточке. */
 .editor-panel { margin-top: 36px; }
+.editing-card { grid-column: 1 / -1; }
+.editing-card .room-form { width: 100%; }
+

@@ -98,7 +98,7 @@ export default function App() {
 
   function openEdit(room) {
     setEditingRoom(room);
-    setFormOpen(true);
+    setFormOpen(false);
   }
 
   const availableCount = rooms.filter(room => room.isActive).length;
@@ -114,7 +114,7 @@ export default function App() {
       </header>
 
       <main className="container">
-        {formOpen ? (
+        {formOpen && !editingRoom ? (
           <section className="panel editor-panel">
             <RoomForm room={editingRoom} onSave={saveRoom} onCancel={closeForm} />
           </section>
@@ -173,7 +173,7 @@ export default function App() {
           <h2>Список помещений</h2>
           <span className="muted">Найдено: {filteredRooms.length}</span>
         </div>
-        <RoomList rooms={filteredRooms} onEdit={openEdit} onDelete={deleteRoom} />
+        <RoomList rooms={filteredRooms} editingRoom={editingRoom} onEdit={openEdit} onDelete={deleteRoom} onSave={saveRoom} onCancel={closeForm} />
           </>
         )}
       </main>
