@@ -25,6 +25,7 @@ const initialRooms = [
 export default function App() {
   const [rooms, setRooms] = useLocalStorage('booking-system-rooms', initialRooms);
   const [search, setSearch] = useState('');
+  const [roomType, setRoomType] = useState('all');
   const [status, setStatus] = useState('all');
   const [sort, setSort] = useState('number');
   const [formOpen, setFormOpen] = useState(false);
@@ -35,6 +36,12 @@ export default function App() {
     document.title = `Помещения (${rooms.length}) — Booking System`;
   }, [rooms.length]);
 
+  // Список типов формируем из названий существующих помещений.
+  // Для этого не нужно добавлять отдельное поле в модель Room.
+  const roomTypes = [...new Set(rooms.map(room => room.name).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'ru'));
+  const selectedType = roomTypes.includes(roomType) ? roomType : 'all';
+
   // Поиск, фильтрация и сортировка не меняют исходный массив rooms.
   const query = search.trim().toLowerCase();
   const filteredRooms = rooms
@@ -43,7 +50,8 @@ export default function App() {
       const matchesSearch = text.includes(query);
       const matchesStatus = status === 'all' ||
         (status === 'active' ? room.isActive : !room.isActive);
-      return matchesSearch && matchesStatus;
+      const matchesType = selectedType === 'all' || room.name === selectedType;
+      return matchesSearch && matchesType && matchesStatus;
     })
     .sort((a, b) => {
       if (sort === 'capacity') return b.capacity - a.capacity;
@@ -108,9 +116,11 @@ export default function App() {
       <main className="container">
         <section className="page-heading">
           <div>
-            <span className="eyebrow">Лабораторная работа №4</span>
             <h1>Помещения</h1>
-            <p className="muted">Управляйте списком помещений для бронирования.</p>
+            <div className="summary">
+              <span>Всего: <strong>{rooms.length}</strong></span>
+              <span>Доступно: <strong>{availableCount}</strong></span>
+            </div>
           </div>
           {!formOpen && (
             <button className="primary add-button" onClick={openCreate}>
@@ -119,40 +129,46 @@ export default function App() {
           )}
         </section>
 
-        <div className="stats">
-          <div className="stat"><span>Всего помещений</span><strong>{rooms.length}</strong></div>
-          <div className="stat"><span>Доступно</span><strong>{availableCount}</strong></div>
-          <div className="stat"><span>Недоступно</span><strong>{rooms.length - availableCount}</strong></div>
-        </div>
-
         {formOpen && (
           <section className="panel">
             <RoomForm room={editingRoom} onSave={saveRoom} onCancel={closeForm} />
           </section>
         )}
 
-        <section className="panel filters">
-          <label>
-            Поиск
+        <section className="panel search-panel">
+          <label className="search-field">
+            Поиск помещений
             <input type="search" value={search} onChange={event => setSearch(event.target.value)}
-              placeholder="Название, номер или корпус" />
+              placeholder="Введите название, номер или корпус" />
           </label>
-          <label>
-            Доступность
-            <select value={status} onChange={event => setStatus(event.target.value)}>
-              <option value="all">Все помещения</option>
-              <option value="active">Доступные</option>
-              <option value="inactive">Недоступные</option>
-            </select>
-          </label>
-          <label>
-            Сортировка
-            <select value={sort} onChange={event => setSort(event.target.value)}>
-              <option value="number">По номеру</option>
-              <option value="name">По названию</option>
-              <option value="capacity">По вместимости ↓</option>
-            </select>
-          </label>
+
+          <div className="filters-row">
+            <label>
+              Тип помещения
+              <select value={selectedType} onChange={event => setRoomType(event.target.value)}>
+                <option value="all">Все типы</option>
+                {roomTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Доступность
+              <select value={status} onChange={event => setStatus(event.target.value)}>
+                <option value="all">Все помещения</option>
+                <option value="active">Доступные</option>
+                <option value="inactive">Недоступные</option>
+              </select>
+            </label>
+            <label>
+              Сортировка
+              <select value={sort} onChange={event => setSort(event.target.value)}>
+                <option value="number">По номеру</option>
+                <option value="name">По названию</option>
+                <option value="capacity">По вместимости ↓</option>
+              </select>
+            </label>
+          </div>
         </section>
 
         <div className="results-heading">
@@ -160,7 +176,6 @@ export default function App() {
           <span className="muted">Найдено: {filteredRooms.length}</span>
         </div>
         <RoomList rooms={filteredRooms} onEdit={openEdit} onDelete={deleteRoom} />
-        <footer>Данные хранятся локально в вашем браузере (localStorage).</footer>
       </main>
     </div>
   );
