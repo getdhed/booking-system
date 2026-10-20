@@ -99,3 +99,6 @@ input:focus, textarea:focus, select:focus {
   .room-grid, .filters-row, .form-grid { grid-template-columns: 1fr; }
   .panel { padding: 18px; }
 }
+
+/* При добавлении и редактировании показываем отдельную форму. */
+.editor-panel { margin-top: 36px; }
