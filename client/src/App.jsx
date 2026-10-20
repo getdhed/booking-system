@@ -114,6 +114,12 @@ export default function App() {
       </header>
 
       <main className="container">
+        {formOpen ? (
+          <section className="panel editor-panel">
+            <RoomForm room={editingRoom} onSave={saveRoom} onCancel={closeForm} />
+          </section>
+        ) : (
+          <>
         <section className="page-heading">
           <div>
             <h1>Помещения</h1>
@@ -122,18 +128,10 @@ export default function App() {
               <span>Доступно: <strong>{availableCount}</strong></span>
             </div>
           </div>
-          {!formOpen && (
-            <button className="primary add-button" onClick={openCreate}>
-              + Добавить помещение
-            </button>
-          )}
+          <button className="primary add-button" onClick={openCreate}>
+            + Добавить помещение
+          </button>
         </section>
-
-        {formOpen && (
-          <section className="panel">
-            <RoomForm room={editingRoom} onSave={saveRoom} onCancel={closeForm} />
-          </section>
-        )}
 
         <section className="panel search-panel">
           <label className="search-field">
@@ -176,6 +174,8 @@ export default function App() {
           <span className="muted">Найдено: {filteredRooms.length}</span>
         </div>
         <RoomList rooms={filteredRooms} onEdit={openEdit} onDelete={deleteRoom} />
+          </>
+        )}
       </main>
     </div>
   );
