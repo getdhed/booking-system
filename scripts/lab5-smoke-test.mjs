@@ -40,9 +40,8 @@ const room = {
 let createdId = null;
 let token = null;
 try {
-  const initialRooms = await call('/rooms');
-  assert.ok(Array.isArray(initialRooms), 'GET /rooms должен вернуть массив');
-  console.log('✓ GET /rooms');
+  await call('/rooms', { expectedStatus: 401 });
+  console.log('✓ GET /rooms без авторизации отклонён');
 
   await call('/rooms', { method: 'POST', body: room, expectedStatus: 401 });
   console.log('✓ Запись без JWT отклонена');
@@ -52,7 +51,11 @@ try {
   });
   assert.ok(session.accessToken, 'Не получен accessToken');
   token = session.accessToken;
-  console.log('✓ Авторизация');
+  const profile = await call('/profile', { token });
+  assert.equal(profile.role, 'admin', 'Для проверки записи требуется администратор');
+  const initialRooms = await call('/rooms', { token });
+  assert.ok(Array.isArray(initialRooms), 'GET /rooms должен вернуть массив');
+  console.log('✓ Авторизация и GET /rooms с JWT');
 
   const created = await call('/rooms', {
     method: 'POST', body: room, token, expectedStatus: 201
@@ -67,7 +70,7 @@ try {
   assert.equal(updated.capacity, 12);
   console.log('✓ PUT /rooms/:id');
 
-  const fetched = await call('/rooms/' + createdId);
+  const fetched = await call('/rooms/' + createdId, { token });
   assert.equal(fetched.capacity, 12);
   console.log('✓ GET /rooms/:id после редактирования');
 
