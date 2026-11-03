@@ -79,7 +79,8 @@ async function createBooking(req, res, next) {
       endTime,
       purpose,
       attendeeCount,
-      status
+      // Обычный пользователь не может выдать себе подтверждённое бронирование.
+      status: req.user.role === 'admin' && status ? status : 'pending'
     });
 
     const createdBooking = await Booking.findByPk(booking.id, {

@@ -110,6 +110,10 @@ export function registerAccount(data) {
   return request('/auth/register', { method: 'POST', body: data, auth: false });
 }
 
+export function createBooking(data) {
+  return request('/bookings', { method: 'POST', body: data });
+}
+
 export function getMyBookings(signal) {
   return request('/bookings', { signal });
 }

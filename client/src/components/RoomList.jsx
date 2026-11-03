@@ -1,7 +1,7 @@
 import RoomForm from './RoomForm.jsx';
 
 export default function RoomList({
-  rooms, editingRoom, onEdit, onDelete, onSave, onCancel, canEdit, busy
+  rooms, editingRoom, onEdit, onDelete, onSave, onCancel, canEdit, busy, onBook
 }) {
   if (rooms.length === 0) {
     return (
@@ -33,10 +33,12 @@ export default function RoomList({
               <p className="description">{room.description || 'Описание не указано'}</p>
               {room.pending && <p className="pending-label" role="status">Сохранение...</p>}
               <div className="card-actions">
-                <button className="secondary" onClick={() => onEdit(room)}
-                  disabled={!canEdit || busy || room.pending}>Редактировать</button>
-                <button className="danger" onClick={() => onDelete(room.id)}
-                  disabled={!canEdit || busy || room.pending}>Удалить</button>
+                {!canEdit && room.isActive && <button className="primary" disabled={busy || room.pending}
+                  onClick={() => onBook(room)}>Забронировать</button>}
+                {canEdit && <button className="secondary" onClick={() => onEdit(room)}
+                  disabled={busy || room.pending}>Редактировать</button>}
+                {canEdit && <button className="danger" onClick={() => onDelete(room.id)}
+                  disabled={busy || room.pending}>Удалить</button>}
               </div>
             </>
           )}
