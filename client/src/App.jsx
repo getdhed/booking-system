@@ -1,25 +1,70 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import RoomForm from './components/RoomForm.jsx';
 import RoomList from './components/RoomList.jsx';
+import AuthPage, { Brand } from './components/AuthPage.jsx';
 import {
-  fetchRooms, addRoom, updateRoom, deleteRoom,
-  signIn, signOut, hasSession, getErrorMessage
+  hasSession, getProfile, getErrorMessage, fetchRooms, addRoom, updateRoom, deleteRoom,
+  getMyBookings, getUsers, signOut
 } from './api.js';
 
+function currentRoute() {
+  return window.location.pathname === '/register' ? '/register' : '/login';
+}
+
+function roleLabel(role) {
+  return role === 'admin' ? 'Администратор' : 'Пользователь';
+}
+
 export default function App() {
-  // Список хранится в React, а источник истины теперь PostgreSQL.
+  const [route, setRoute] = useState(currentRoute);
+  const [profile, setProfile] = useState(null);
+  const [checking, setChecking] = useState(hasSession());
+  const [authError, setAuthError] = useState('');
+  const [activeTab, setActiveTab] = useState('rooms');
+
+  // Первая страница доступна только после проверки /profile на сервере.
+  const loadProfile = useCallback(async () => {
+    setChecking(true);
+    setAuthError('');
+    try {
+      const user = await getProfile();
+      if (!['user', 'admin'].includes(user?.role)) throw new Error('Неизвестная роль аккаунта.');
+      setProfile(user);
+      setActiveTab('rooms');
+      window.history.replaceState({}, '', '/');
+    } catch (error) {
+      setProfile(null);
+      setAuthError(getErrorMessage(error));
+    } finally { setChecking(false); }
+  }, []);
+
+  useEffect(() => {
+    if (hasSession()) void loadProfile();
+    const onPopState = () => setRoute(currentRoute());
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [loadProfile]);
+
+  function navigate(url) {
+    window.history.pushState({}, '', url);
+    setRoute(url);
+    setAuthError('');
+  }
+
+  async function logout() {
+    try { await signOut(); }
+    catch (error) { console.warn('Ошибка серверного выхода:', getErrorMessage(error)); }
+    setProfile(null);
+    setRooms([]);
+    navigate('/login');
+  }
+
   const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState(null);
   const [mutationPending, setMutationPending] = useState(false);
   const controllerRef = useRef(null);
-
-  const [authenticated, setAuthenticated] = useState(hasSession());
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [authBusy, setAuthBusy] = useState(false);
-  const [authError, setAuthError] = useState('');
 
   const [search, setSearch] = useState('');
   const [roomType, setRoomType] = useState('all');
@@ -29,7 +74,15 @@ export default function App() {
   const [editingRoom, setEditingRoom] = useState(null);
   const [draft, setDraft] = useState(null);
 
-  // Выбранное улучшение ЛР №5: AbortController отменяет устаревший GET.
+  const [bookings, setBookings] = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingsError, setBookingsError] = useState('');
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState('');
+
+  const isAdmin = profile?.role === 'admin';
+
   const loadRooms = useCallback(async () => {
     controllerRef.current?.abort();
     const controller = new AbortController();
@@ -38,85 +91,72 @@ export default function App() {
     setError('');
     try {
       const data = await fetchRooms(controller.signal);
-      if (!Array.isArray(data)) throw new Error('Сервер вернул некорректный список.');
+      if (!Array.isArray(data)) throw new Error('Некорректный ответ сервера.');
       if (!controller.signal.aborted) setRooms(data);
-    } catch (requestError) {
-      if (!controller.signal.aborted) setError(getErrorMessage(requestError));
+    } catch (err) {
+      if (!controller.signal.aborted) setError(getErrorMessage(err));
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadRooms();
+    if (profile) void loadRooms();
     return () => controllerRef.current?.abort();
-  }, [loadRooms]);
+  }, [profile?.id, loadRooms]);
+
+  const loadBookings = useCallback(async () => {
+    setBookingsLoading(true);
+    setBookingsError('');
+    try {
+      const data = await getMyBookings();
+      setBookings(Array.isArray(data) ? data : []);
+    } catch (err) { setBookingsError(getErrorMessage(err)); }
+    finally { setBookingsLoading(false); }
+  }, []);
+
+  const loadUsers = useCallback(async () => {
+    setUsersLoading(true);
+    setUsersError('');
+    try {
+      const data = await getUsers();
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (err) { setUsersError(getErrorMessage(err)); }
+    finally { setUsersLoading(false); }
+  }, []);
 
   useEffect(() => {
-    document.title = 'Помещения (' + rooms.length + ') — Booking System';
-  }, [rooms.length]);
+    if (!profile) return;
+    if (activeTab === 'bookings') void loadBookings();
+    if (activeTab === 'users' && isAdmin) void loadUsers();
+  }, [profile?.id, activeTab, isAdmin, loadBookings, loadUsers]);
 
-  async function login(event) {
-    event.preventDefault();
-    setAuthBusy(true);
-    setAuthError('');
-    try {
-      await signIn(email.trim(), password);
-      setAuthenticated(true);
-      setPassword('');
-      setNotice({ type: 'success', message: 'Вход выполнен. Изменения будут сохранены на сервере.' });
-    } catch (loginError) {
-      setAuthError(getErrorMessage(loginError));
-    } finally {
-      setAuthBusy(false);
-    }
-  }
+  useEffect(() => {
+    document.title = profile ? 'Личный кабинет — BookingSpace' : 'Вход — BookingSpace';
+  }, [profile]);
 
-  async function logout() {
-    if (mutationPending) return;
-    setAuthBusy(true);
-    try {
-      await signOut();
-      setNotice({ type: 'success', message: 'Вы вышли из системы.' });
-    } catch (logoutError) {
-      setNotice({ type: 'error', message: 'Локальный выход выполнен. ' + getErrorMessage(logoutError) });
-    } finally {
-      setAuthenticated(false);
-      setAuthBusy(false);
-      closeForm();
-    }
-  }
+  function closeForm() { setEditingRoom(null); setFormOpen(false); setDraft(null); }
 
-  function closeForm() {
-    setEditingRoom(null);
-    setFormOpen(false);
-    setDraft(null);
-  }
-
-  function showMutationError(mutationError) {
-    if (mutationError.status === 401) setAuthenticated(false);
-    setNotice({ type: 'error', message: getErrorMessage(mutationError) + ' Изменение отменено.' });
+  function showMutationError(err) {
+    setNotice({ type: 'error', message: getErrorMessage(err) + ' Изменение отменено.' });
+    if (err.status === 401) void loadProfile();
   }
 
   async function createOptimistically(data) {
-    const temporaryId = 'temp-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    const tempId = 'temp-' + Date.now() + '-' + Math.random().toString(36).slice(2);
     setMutationPending(true);
-    setRooms(previous => [...previous, { ...data, id: temporaryId, pending: true }]);
+    setRooms(previous => [...previous, { ...data, id: tempId, pending: true }]);
     closeForm();
-
     try {
-      const saved = await addRoom(data);
-      setRooms(previous => previous.map(room => room.id === temporaryId ? saved : room));
-      setNotice({ type: 'success', message: 'Помещение добавлено в базу данных.' });
-    } catch (requestError) {
-      // POST не удался: убираем временную карточку и восстанавливаем форму.
-      setRooms(previous => previous.filter(room => room.id !== temporaryId));
+      const created = await addRoom(data);
+      setRooms(previous => previous.map(room => room.id === tempId ? created : room));
+      setNotice({ type: 'success', message: 'Помещение успешно добавлено.' });
+    } catch (err) {
+      setRooms(previous => previous.filter(room => room.id !== tempId));
       setDraft(data);
       setFormOpen(true);
-      showMutationError(requestError);
-    } finally {
-      setMutationPending(false);
-    }
+      showMutationError(err);
+    } finally { setMutationPending(false); }
   }
 
   async function updateOptimistically(original, data) {
@@ -125,220 +165,192 @@ export default function App() {
       room.id === original.id ? { ...room, ...data, pending: true } : room
     ));
     closeForm();
-
     try {
-      const saved = await updateRoom(original.id, data);
-      setRooms(previous => previous.map(room => room.id === original.id ? saved : room));
-      setNotice({ type: 'success', message: 'Изменения сохранены на сервере.' });
-    } catch (requestError) {
-      // PUT не удался: возвращаем прежнюю карточку и редактор.
+      const updated = await updateRoom(original.id, data);
+      setRooms(previous => previous.map(room => room.id === original.id ? updated : room));
+      setNotice({ type: 'success', message: 'Изменения сохранены.' });
+    } catch (err) {
       setRooms(previous => previous.map(room => room.id === original.id ? original : room));
       setEditingRoom(original);
-      showMutationError(requestError);
-    } finally {
-      setMutationPending(false);
-    }
+      showMutationError(err);
+    } finally { setMutationPending(false); }
   }
 
   function saveRoom(data) {
-    if (!authenticated || mutationPending) return false;
-
-    const duplicate = rooms.some(room =>
-      room.roomNumber.toLowerCase() === data.roomNumber.toLowerCase() &&
-      room.id !== editingRoom?.id
-    );
-    if (duplicate) return false;
-
-    if (editingRoom) {
-      void updateOptimistically(editingRoom, data);
-    } else {
-      void createOptimistically(data);
-    }
+    if (!isAdmin || mutationPending) return false;
+    if (rooms.some(room => room.roomNumber.toLowerCase() === data.roomNumber.toLowerCase() &&
+      room.id !== editingRoom?.id)) return false;
+    if (editingRoom) void updateOptimistically(editingRoom, data);
+    else void createOptimistically(data);
     return true;
   }
 
   async function removeRoom(id) {
-    if (!authenticated || mutationPending) return;
-    if (!window.confirm('Удалить помещение?')) return;
-
+    if (!isAdmin || mutationPending || !window.confirm('Удалить помещение?')) return;
     const index = rooms.findIndex(room => room.id === id);
     if (index < 0) return;
     const removed = rooms[index];
-
     setMutationPending(true);
     setRooms(previous => previous.filter(room => room.id !== id));
     try {
       await deleteRoom(id);
-      setNotice({ type: 'success', message: 'Помещение удалено из базы данных.' });
-    } catch (requestError) {
-      // DELETE не удался: возвращаем карточку на исходное место.
+      setNotice({ type: 'success', message: 'Помещение удалено.' });
+    } catch (err) {
       setRooms(previous => {
-        const restored = [...previous];
-        restored.splice(Math.min(index, restored.length), 0, removed);
-        return restored;
+        const next = [...previous];
+        next.splice(Math.min(index, next.length), 0, removed);
+        return next;
       });
-      showMutationError(requestError);
-    } finally {
-      setMutationPending(false);
-    }
+      showMutationError(err);
+    } finally { setMutationPending(false); }
   }
 
-  function openCreate() {
-    if (!authenticated || mutationPending) return;
-    setEditingRoom(null);
-    setDraft(null);
-    setFormOpen(true);
-  }
-
-  function openEdit(room) {
-    if (!authenticated || mutationPending) return;
-    setEditingRoom(room);
-    setFormOpen(false);
-  }
-
-  // Локальные поиск и фильтрация из ЛР №4 сохранены.
   const roomTypes = [...new Set(rooms.map(room => room.name).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, 'ru'));
   const selectedType = roomTypes.includes(roomType) ? roomType : 'all';
   const query = search.trim().toLowerCase();
-  const filteredRooms = rooms
-    .filter(room => {
-      const text = [room.name, room.roomNumber, room.location].join(' ').toLowerCase();
-      const matchesSearch = text.includes(query);
-      const matchesStatus = status === 'all' ||
-        (status === 'active' ? room.isActive : !room.isActive);
-      const matchesType = selectedType === 'all' || room.name === selectedType;
-      return matchesSearch && matchesType && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (sort === 'capacity') return b.capacity - a.capacity;
-      if (sort === 'name') return a.name.localeCompare(b.name, 'ru');
-      return a.roomNumber.localeCompare(b.roomNumber, 'ru', { numeric: true });
-    });
+  const filteredRooms = rooms.filter(room => {
+    const text = [room.name, room.roomNumber, room.location].join(' ').toLowerCase();
+    return text.includes(query) && (selectedType === 'all' || selectedType === room.name) &&
+      (status === 'all' || (status === 'active' ? room.isActive : !room.isActive));
+  }).sort((a, b) => {
+    if (sort === 'capacity') return b.capacity - a.capacity;
+    if (sort === 'name') return a.name.localeCompare(b.name, 'ru');
+    return a.roomNumber.localeCompare(b.roomNumber, 'ru', { numeric: true });
+  });
 
-  const availableCount = rooms.filter(room => room.isActive).length;
+  if (checking) {
+    return <div className="app-loading" role="status"><span className="spinner" />Проверяем вашу сессию...</div>;
+  }
+  if (!profile) {
+    return <><AuthPage key={route} mode={route === '/register' ? 'register' : 'login'}
+      onNavigate={navigate} onAuthenticated={loadProfile} />
+      {authError && <div className="session-error" role="alert">{authError}</div>}</>;
+  }
 
-  return (
-    <div className="app-shell">
-      <header className="site-header">
-        <div className="container header-inner">
-          <span className="logo-mark">B</span>
-          <strong>Booking System</strong>
-          <span className="header-tag">Управление помещениями</span>
-        </div>
+  return <div className="dashboard-shell">
+    <aside className="sidebar">
+      <Brand />
+      <div className="nav-caption">РАБОЧЕЕ ПРОСТРАНСТВО</div>
+      <nav aria-label="Основная навигация">
+        <button className={'nav-link ' + (activeTab === 'rooms' ? 'selected' : '')}
+          onClick={() => setActiveTab('rooms')}><span>▦</span>{isAdmin ? 'Управление помещениями' : 'Каталог помещений'}</button>
+        <button className={'nav-link ' + (activeTab === 'bookings' ? 'selected' : '')}
+          onClick={() => setActiveTab('bookings')}><span>▤</span>{isAdmin ? 'Все бронирования' : 'Мои бронирования'}</button>
+        {isAdmin && <button className={'nav-link ' + (activeTab === 'users' ? 'selected' : '')}
+          onClick={() => setActiveTab('users')}><span>♙</span>Пользователи</button>}
+        <button className={'nav-link ' + (activeTab === 'profile' ? 'selected' : '')}
+          onClick={() => setActiveTab('profile')}><span>◉</span>Мой профиль</button>
+      </nav>
+      <div className="sidebar-bottom">
+        <div className="sidebar-account"><div className="avatar">{profile.fullName?.charAt(0)?.toUpperCase() || 'U'}</div>
+          <div><strong>{profile.fullName}</strong><span>{roleLabel(profile.role)}</span></div></div>
+        <button className="logout-button" onClick={logout}>↪ &nbsp; Выйти из аккаунта</button>
+      </div>
+    </aside>
+    <div className="dashboard-main">
+      <header className="dashboard-header">
+        <div><span className="header-breadcrumb">BookingSpace</span><span className="breadcrumb-separator">/</span>
+          <strong>{activeTab === 'rooms' ? 'Помещения' : activeTab === 'bookings' ? 'Бронирования' :
+            activeTab === 'users' ? 'Пользователи' : 'Профиль'}</strong></div>
+        <div className="header-right"><span className={'role-pill ' + (isAdmin ? 'role-admin' : '')}>
+          {isAdmin ? '✦ Администратор' : '✓ Пользователь'}</span>
+          <div className="avatar avatar-small">{profile.fullName?.charAt(0)?.toUpperCase() || 'U'}</div></div>
       </header>
+      <main className="workspace">
+        {notice && <div className={'notice ' + (notice.type === 'error' ? 'notice-error' : 'notice-success')}
+          role={notice.type === 'error' ? 'alert' : 'status'}>
+          <span>{notice.message}</span><button aria-label="Закрыть" onClick={() => setNotice(null)}>×</button>
+        </div>}
 
-      <main className="container">
-        {authenticated ? (
-          <section className="auth-status">
-            <span>Авторизация: выполнена</span>
-            <button type="button" className="secondary" disabled={authBusy || mutationPending} onClick={logout}>
-              {authBusy ? 'Выход...' : 'Выйти'}
-            </button>
-          </section>
-        ) : (
-          <section className="panel auth-panel">
-            <h2>Вход для управления помещениями</h2>
-            <p className="muted">Просмотр открыт всем. Для добавления, изменения и удаления войдите с учётной записью сервера.</p>
-            <form className="login-form" onSubmit={login}>
-              <label>Email
-                <input type="email" autoComplete="username" value={email}
-                  onChange={event => setEmail(event.target.value)} required />
-              </label>
-              <label>Пароль
-                <input type="password" autoComplete="current-password" value={password}
-                  onChange={event => setPassword(event.target.value)} required />
-              </label>
-              <button type="submit" className="primary" disabled={authBusy}>
-                {authBusy ? 'Вход...' : 'Войти'}
-              </button>
-            </form>
-            {authError && <p className="error" role="alert">{authError}</p>}
-          </section>
-        )}
-
-        {notice && (
-          <div className={'notice ' + (notice.type === 'error' ? 'notice-error' : 'notice-success')}
-            role={notice.type === 'error' ? 'alert' : 'status'}>
-            <span>{notice.message}</span>
-            <button type="button" aria-label="Закрыть уведомление" onClick={() => setNotice(null)}>×</button>
+        {activeTab === 'rooms' && <>
+          <div className="workspace-heading"><div>
+            <span className="section-eyebrow">{isAdmin ? 'ПАНЕЛЬ АДМИНИСТРАТОРА' : 'ВАШЕ ПРОСТРАНСТВО'}</span>
+            <h1>{isAdmin ? 'Управление помещениями' : 'Доступные помещения'}</h1>
+            <p>{isAdmin ? 'Создавайте помещения и управляйте их доступностью.' :
+              'Исследуйте каталог помещений и выбирайте подходящее пространство.'}</p></div>
+            {isAdmin && <button className="primary" disabled={mutationPending || loading || Boolean(error)}
+              onClick={() => { setEditingRoom(null); setDraft(null); setFormOpen(true); }}>+ Добавить помещение</button>}
           </div>
-        )}
-
-        {formOpen && !editingRoom ? (
-          <section className="panel editor-panel">
-            <RoomForm room={null} initialValues={draft} onSave={saveRoom} onCancel={closeForm} />
-          </section>
-        ) : (
-          <>
-            <section className="page-heading">
-              <div>
-                <h1>Помещения</h1>
-                <div className="summary">
-                  <span>Всего: <strong>{rooms.length}</strong></span>
-                  <span>Доступно: <strong>{availableCount}</strong></span>
-                </div>
-              </div>
-              <button className="primary add-button" onClick={openCreate}
-                disabled={!authenticated || mutationPending || loading || Boolean(error)}>
-                + Добавить помещение
-              </button>
-            </section>
-
-            <section className="panel search-panel">
-              <label className="search-field">
-                Поиск помещений
-                <input type="search" value={search} onChange={event => setSearch(event.target.value)}
-                  placeholder="Введите название, номер или корпус" />
-              </label>
-              <div className="filters-row">
-                <label>Тип помещения
-                  <select value={selectedType} onChange={event => setRoomType(event.target.value)}>
-                    <option value="all">Все типы</option>
-                    {roomTypes.map(type => <option key={type} value={type}>{type}</option>)}
-                  </select>
-                </label>
-                <label>Доступность
-                  <select value={status} onChange={event => setStatus(event.target.value)}>
-                    <option value="all">Все помещения</option>
-                    <option value="active">Доступные</option>
-                    <option value="inactive">Недоступные</option>
-                  </select>
-                </label>
-                <label>Сортировка
-                  <select value={sort} onChange={event => setSort(event.target.value)}>
-                    <option value="number">По номеру</option>
-                    <option value="name">По названию</option>
-                    <option value="capacity">По вместимости ↓</option>
-                  </select>
-                </label>
-              </div>
-            </section>
-
-            <div className="results-heading">
-              <h2>Список помещений</h2>
-              <span className="muted">Найдено: {loading ? '...' : filteredRooms.length}</span>
+          <div className="stat-grid">
+            <div className="stat-card"><span>Всего помещений</span><strong>{rooms.length}</strong><small>В базе данных</small></div>
+            <div className="stat-card"><span>Доступно</span><strong>{rooms.filter(r => r.isActive).length}</strong><small>Для использования</small></div>
+            <div className="stat-card"><span>Недоступно</span><strong>{rooms.filter(r => !r.isActive).length}</strong><small>Временно закрыто</small></div>
+          </div>
+          {formOpen && isAdmin && <section className="panel"><RoomForm room={null} initialValues={draft} onSave={saveRoom} onCancel={closeForm} /></section>}
+          <section className="panel search-panel">
+            <label className="search-field">Поиск помещения
+              <input value={search} type="search" placeholder="Название, номер или расположение..."
+                onChange={event => setSearch(event.target.value)} /></label>
+            <div className="filters-row">
+              <label>Тип помещения<select value={selectedType} onChange={event => setRoomType(event.target.value)}>
+                <option value="all">Все типы</option>
+                {roomTypes.map(type => <option key={type} value={type}>{type}</option>)}
+              </select></label>
+              <label>Статус<select value={status} onChange={event => setStatus(event.target.value)}>
+                <option value="all">Все помещения</option><option value="active">Доступные</option>
+                <option value="inactive">Недоступные</option>
+              </select></label>
+              <label>Сортировка<select value={sort} onChange={event => setSort(event.target.value)}>
+                <option value="number">По номеру</option><option value="name">По названию</option>
+                <option value="capacity">По вместимости ↓</option>
+              </select></label>
             </div>
+          </section>
+          <div className="results-heading"><h2>Список помещений</h2><span className="muted">Найдено: {filteredRooms.length}</span></div>
+          {loading ? <div className="loading-panel" role="status"><span className="spinner" />Загрузка с сервера...</div> :
+            error ? <div className="loading-panel" role="alert"><p className="error">{error}</p>
+              <button className="secondary" onClick={loadRooms}>Повторить</button></div> :
+            <RoomList rooms={filteredRooms} editingRoom={editingRoom} onEdit={room => {setEditingRoom(room);setFormOpen(false);}}
+              onDelete={removeRoom} onSave={saveRoom} onCancel={closeForm}
+              canEdit={isAdmin} busy={mutationPending} />}
+          {mutationPending && <p className="muted" role="status">Сохранение изменений на сервере...</p>}
+        </>}
 
-            {loading ? (
-              <div className="loading-panel" role="status">
-                <span className="spinner" aria-hidden="true" />
-                Загрузка помещений с сервера...
-              </div>
-            ) : error ? (
-              <div className="loading-panel" role="alert">
-                <p className="error">{error}</p>
-                <button className="secondary" type="button" onClick={loadRooms}>Повторить</button>
-              </div>
-            ) : (
-              <RoomList rooms={filteredRooms} editingRoom={editingRoom}
-                onEdit={openEdit} onDelete={removeRoom} onSave={saveRoom} onCancel={closeForm}
-                canEdit={authenticated} busy={mutationPending} />
-            )}
-            {mutationPending && <p role="status" className="muted">Отправка изменений на сервер...</p>}
-          </>
-        )}
+        {activeTab === 'bookings' && <>
+          <div className="workspace-heading"><div><span className="section-eyebrow">БРОНИРОВАНИЯ</span>
+            <h1>{isAdmin ? 'Все бронирования' : 'Мои бронирования'}</h1>
+            <p>{isAdmin ? 'Просмотр записей всех пользователей.' : 'История бронирований вашей учётной записи.'}</p></div>
+            <button className="secondary" onClick={loadBookings}>↻ Обновить</button></div>
+          {bookingsLoading ? <div className="loading-panel"><span className="spinner" />Загрузка...</div> :
+            bookingsError ? <div className="loading-panel"><p className="error">{bookingsError}</p><button onClick={loadBookings}>Повторить</button></div> :
+            bookings.length ? <div className="data-table-wrap"><table className="data-table"><thead><tr>
+              <th>№</th><th>Помещение</th><th>Начало</th><th>Окончание</th><th>Статус</th></tr></thead><tbody>
+              {bookings.map(booking => <tr key={booking.id}><td>#{booking.id}</td>
+                <td>{booking.room?.name || 'Помещение №' + booking.roomId}</td>
+                <td>{new Date(booking.startTime).toLocaleString('ru-RU')}</td>
+                <td>{new Date(booking.endTime).toLocaleString('ru-RU')}</td>
+                <td><span className="table-status">{booking.status}</span></td></tr>)}
+            </tbody></table></div> :
+            <div className="empty">Бронирований пока нет.</div>}
+        </>}
+
+        {activeTab === 'users' && isAdmin && <>
+          <div className="workspace-heading"><div><span className="section-eyebrow">АДМИНИСТРИРОВАНИЕ</span>
+            <h1>Пользователи</h1><p>Зарегистрированные аккаунты и их роли в системе.</p></div>
+            <button className="secondary" onClick={loadUsers}>↻ Обновить</button></div>
+          {usersLoading ? <div className="loading-panel"><span className="spinner" />Загрузка...</div> :
+            usersError ? <div className="loading-panel"><p className="error">{usersError}</p><button onClick={loadUsers}>Повторить</button></div> :
+            <div className="data-table-wrap"><table className="data-table"><thead>
+              <tr><th>ID</th><th>Имя</th><th>Почта</th><th>Роль</th></tr></thead><tbody>
+              {users.map(user => <tr key={user.id}><td>#{user.id}</td><td>{user.fullName}</td>
+                <td>{user.email}</td><td><span className="table-status">{roleLabel(user.role)}</span></td></tr>)}
+              </tbody></table></div>}
+        </>}
+
+        {activeTab === 'profile' && <><div className="workspace-heading"><div>
+          <span className="section-eyebrow">ЛИЧНЫЙ КАБИНЕТ</span><h1>Мой профиль</h1>
+          <p>Информация вашей учётной записи.</p></div></div>
+          <section className="profile-panel">
+            <div className="profile-head"><div className="avatar avatar-large">
+              {profile.fullName?.charAt(0)?.toUpperCase() || 'U'}</div>
+              <div><h2>{profile.fullName}</h2><span className={'role-pill ' + (isAdmin ? 'role-admin' : '')}>
+                {roleLabel(profile.role)}</span></div></div>
+            <div className="profile-fields"><div><span>Электронная почта</span><strong>{profile.email}</strong></div>
+              <div><span>Идентификатор аккаунта</span><strong>#{profile.id}</strong></div>
+              <div><span>Уровень доступа</span><strong>{roleLabel(profile.role)}</strong></div></div>
+          </section></>}
       </main>
     </div>
-  );
+  </div>;
 }
