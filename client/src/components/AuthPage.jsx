@@ -6,7 +6,7 @@ function Brand({ large = false }) {
     <div className="brand-symbol"><svg width="27" height="27" viewBox="0 0 32 32" fill="none" aria-hidden="true">
       <path d="M8 26V7h16v19M8 13h16" stroke="currentColor" strokeWidth="2.3" strokeLinecap="square" strokeLinejoin="miter"/>
     </svg></div>
-    <div><strong>Переговория<span>.</span></strong>{large && <small>Пространство для ваших встреч</small>}</div>
+    <div><strong>переговор<span>ия.</span></strong>{large && <small>Пространство для ваших встреч</small>}</div>
   </div>;
 }
 
