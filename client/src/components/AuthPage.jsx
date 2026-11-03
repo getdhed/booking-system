@@ -47,55 +47,45 @@ export default function AuthPage({ mode, onNavigate, onAuthenticated }) {
     } catch (err) { setError(getErrorMessage(err)); }
     finally { setBusy(false); }
   }
-  return <div className="auth-layout">
-    <div className="auth-aside">
-      <Brand large />
-      <div className="auth-aside-content">
-        <span className="eyebrow">УМНОЕ ПРОСТРАНСТВО ДЛЯ ВАШЕЙ КОМАНДЫ</span>
-        <h1>Каждая встреча начинается с правильного места.</h1>
-        <p>Находите свободные аудитории, управляйте помещениями и организуйте рабочее пространство в одной системе.</p>
-        <div className="aside-feature"><span>✓</span> Удобный каталог помещений</div>
-        <div className="aside-feature"><span>✓</span> Персональный доступ и роли</div>
-        <div className="aside-feature"><span>✓</span> Единая система бронирований</div>
-      </div>
-      <div className="auth-aside-footer">© 2026 BookingSpace · Учебный проект</div>
-    </div>
-    <div className="auth-main">
-      <div className="auth-mobile-brand"><Brand /></div>
-      <div className="auth-card">
-        <div className="auth-icon">{register ? '✦' : '↗'}</div>
-        <span className="auth-label">{register ? 'СОЗДАНИЕ АККАУНТА' : 'ДОБРО ПОЖАЛОВАТЬ'}</span>
-        <h2>{register ? 'Регистрация' : 'Вход в систему'}</h2>
-        <p className="auth-subtitle">{register ? 'Заполните данные, чтобы получить доступ к системе' : 'Введите свои данные для продолжения работы'}</p>
-        {success ? <div className="auth-success" role="status">{success}
-          <button type="button" className="primary full-width" onClick={() => onNavigate('/login')}>Перейти ко входу</button>
-        </div> :
-        <form className="auth-form" onSubmit={submit}>
-          {register && <label>Ваше имя<input name="fullName" value={values.fullName} onChange={change}
-            placeholder="Иван Иванов" autoComplete="name" minLength={2} maxLength={100} required /></label>}
-          <label>Электронная почта<input name="email" type="email" value={values.email}
-            onChange={change} autoComplete="email" placeholder="name@example.com" required /></label>
-          <label>Пароль<div className="password-wrapper"><input name="password"
+  return <main className="auth-layout">
+    <div className="auth-card">
+      <div className="auth-brand"><Brand large /></div>
+      <div className="auth-divider" />
+      <h1>{register ? 'Регистрация' : 'Вход'}</h1>
+      <p className="auth-subtitle">{register ? 'Создайте учётную запись для бронирования помещений.' : 'Войдите в систему бронирования помещений.'}</p>
+      {success ? <div className="auth-success" role="status">{success}
+        <button type="button" className="primary full-width" onClick={() => onNavigate('/login')}>Перейти ко входу</button>
+      </div> :
+      <form className="auth-form" onSubmit={submit}>
+        {register && <label>Имя и фамилия
+          <input name="fullName" value={values.fullName} onChange={change}
+            placeholder="Ваше имя" autoComplete="name" minLength={2} maxLength={100} required /></label>}
+        <label>Электронная почта
+          <input name="email" type="email" value={values.email} onChange={change}
+            autoComplete="email" placeholder="Введите адрес электронной почты" required /></label>
+        <label>Пароль
+          <div className="password-wrapper"><input name="password"
             type={showPassword ? 'text' : 'password'} value={values.password}
             onChange={change} autoComplete={register ? 'new-password' : 'current-password'}
             placeholder={register ? 'Не менее 8 символов' : 'Введите пароль'} required />
             <button className="password-toggle" type="button" onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}>{showPassword ? 'Скрыть' : 'Показать'}</button></div></label>
-          {register && <label>Подтверждение пароля<input name="confirm" type="password" value={values.confirm}
-            onChange={change} autoComplete="new-password" placeholder="Повторите пароль" required /></label>}
-          {error && <p className="auth-error" role="alert">{error}</p>}
-          <button className="primary full-width auth-submit" disabled={busy} type="submit">
-            {busy ? 'Подождите...' : register ? 'Создать аккаунт' : 'Войти в аккаунт'} <span>→</span>
-          </button>
-        </form>}
-        <div className="auth-switch">
-          {register ? 'Уже есть аккаунт?' : 'Ещё нет аккаунта?'}{' '}
-          <button type="button" onClick={() => onNavigate(register ? '/login' : '/register')}>
-            {register ? 'Войти' : 'Зарегистрироваться'}
-          </button>
-        </div>
+              aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}>{showPassword ? 'Скрыть' : 'Показать'}</button></div>
+        </label>
+        {register && <label>Повторите пароль
+          <input name="confirm" type="password" value={values.confirm} onChange={change}
+            autoComplete="new-password" placeholder="Подтвердите пароль" required /></label>}
+        {error && <p className="auth-error" role="alert">{error}</p>}
+        <button className="primary full-width auth-submit" disabled={busy} type="submit">
+          {busy ? 'Подождите...' : register ? 'Зарегистрироваться' : 'Войти'}
+        </button>
+      </form>}
+      <div className="auth-switch">
+        {register ? 'Уже есть аккаунт?' : 'Нет аккаунта?'}{' '}
+        <button type="button" onClick={() => onNavigate(register ? '/login' : '/register')}>
+          {register ? 'Войти' : 'Зарегистрироваться'}
+        </button>
       </div>
-      <p className="auth-help">BookingSpace · Безопасный доступ через ваш аккаунт</p>
     </div>
-  </div>;
+    <footer className="auth-footer">BookingSpace · Система бронирования помещений</footer>
+  </main>;
 }
