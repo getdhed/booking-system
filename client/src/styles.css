@@ -394,3 +394,104 @@ input::placeholder, textarea::placeholder { color: #9e9488; }
   .site-brand .brand strong { font-size: 18px; }
   .site-footer { padding: 18px 15px; flex-direction: column; gap: 4px; }
 }
+
+
+/* Компактные страницы авторизации: только логотип, название, форма и переход. */
+.auth-layout {
+  padding: 14px 18px;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.auth-card {
+  width: min(100%, 410px);
+  padding: 25px 31px 27px;
+}
+.auth-brand { margin-bottom: 14px; }
+.auth-brand .brand { gap: 7px; }
+.auth-brand .brand-symbol {
+  width: 82px;
+  height: 82px;
+}
+.auth-brand .brand strong { font-size: 30px; }
+.auth-brand .brand small {
+  font-size: 11px;
+  margin-top: 5px;
+}
+.auth-divider, .auth-subtitle, .auth-footer { display: none; }
+.auth-card h1 {
+  font-size: 26px;
+  margin: 0 0 21px;
+  line-height: 1.2;
+}
+.auth-form { gap: 13px; }
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.auth-field label {
+  font-size: 13px;
+  font-weight: 400;
+  color: #f2eae0;
+}
+.auth-field input {
+  min-height: 42px;
+  height: 42px;
+  padding: 9px 12px;
+}
+.password-wrapper input { padding-right: 50px; }
+.password-toggle {
+  right: 0;
+  width: 44px;
+  height: 42px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dac3b1;
+  transition: color .15s ease;
+}
+.password-toggle:hover { color: #fff; }
+.password-toggle:focus-visible {
+  outline: 2px solid #dfad89;
+  outline-offset: -3px;
+}
+.password-toggle svg { display: block; }
+.auth-submit {
+  min-height: 43px;
+  margin-top: 2px;
+}
+.auth-switch { margin-top: 16px; }
+.auth-register .auth-brand .brand-symbol {
+  width: 72px;
+  height: 72px;
+}
+.auth-register .auth-brand .brand strong { font-size: 28px; }
+.auth-register .auth-brand { margin-bottom: 11px; }
+.auth-register .auth-card h1 { margin-bottom: 17px; }
+.auth-register .auth-form { gap: 11px; }
+
+@media (max-height: 740px) {
+  .auth-layout { padding-block: 9px; }
+  .auth-card { padding-block: 18px 19px; }
+  .auth-brand { margin-bottom: 9px; }
+  .auth-brand .brand-symbol { width: 67px; height: 67px; }
+  .auth-brand .brand strong { font-size: 27px; }
+  .auth-brand .brand small { margin-top: 3px; }
+  .auth-card h1 { font-size: 23px; margin-bottom: 13px; }
+  .auth-form { gap: 10px; }
+  .auth-field { gap: 4px; }
+  .auth-field input { min-height: 39px; height: 39px; }
+  .password-toggle { height: 39px; }
+  .auth-submit { min-height: 40px; }
+  .auth-switch { margin-top: 12px; }
+  .auth-register .auth-brand .brand-symbol { width: 59px; height: 59px; }
+  .auth-register .auth-brand .brand strong { font-size: 26px; }
+  .auth-register .auth-brand { margin-bottom: 8px; }
+  .auth-register .auth-card h1 { margin-bottom: 12px; }
+  .auth-register .auth-form { gap: 9px; }
+}
+@media (max-width: 620px) {
+  .auth-layout { padding: 12px 14px; }
+  .auth-card { padding: 22px 22px 24px; }
+}
