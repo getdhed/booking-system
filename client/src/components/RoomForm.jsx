@@ -5,18 +5,20 @@ const emptyRoom = {
   capacity: '1', description: '', isActive: true,
 };
 
-export default function RoomForm({ room, onSave, onCancel }) {
+export default function RoomForm({ room, initialValues, onSave, onCancel }) {
   const [form, setForm] = useState(emptyRoom);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setForm(room ? {
-      ...room,
-      floor: String(room.floor),
-      capacity: String(room.capacity),
+    const source = room || initialValues;
+    setForm(source ? {
+      ...emptyRoom,
+      ...source,
+      floor: String(source.floor),
+      capacity: String(source.capacity),
     } : emptyRoom);
     setError('');
-  }, [room]);
+  }, [room, initialValues]);
 
   function updateField(event) {
     const { name, type, value, checked } = event.target;
@@ -30,14 +32,15 @@ export default function RoomForm({ room, onSave, onCancel }) {
   function submit(event) {
     event.preventDefault();
 
+    // На сервер отправляем только поля модели Room, без id и createdAt.
     const normalized = {
-      ...form,
       name: form.name.trim(),
       roomNumber: form.roomNumber.trim(),
       location: form.location.trim(),
       description: form.description.trim(),
       floor: Number(form.floor),
       capacity: Number(form.capacity),
+      isActive: form.isActive,
     };
 
     if (!normalized.name || !normalized.roomNumber || !normalized.location) {
@@ -50,9 +53,8 @@ export default function RoomForm({ room, onSave, onCancel }) {
       return;
     }
 
-    const result = onSave(normalized);
-    if (result === false) {
-      setError('Помещение с таким номером уже существует.');
+    if (onSave(normalized) === false) {
+      setError('Помещение с таким номером уже существует или операция недоступна.');
     }
   }
 

@@ -105,3 +105,21 @@ input:focus, textarea:focus, select:focus {
 .editing-card { grid-column: 1 / -1; }
 .editing-card .room-form { width: 100%; }
 
+
+/* ЛР №5: авторизация, загрузка, уведомления и оптимистичное обновление. */
+.auth-panel { margin-top: 26px; }
+.auth-panel h2 { margin-top: 0; }
+.login-form { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px; }
+.login-form label { display: flex; flex-direction: column; flex: 1 1 190px; gap: 7px; font-size: 13px; font-weight: 650; }
+.auth-status { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-top: 20px; color: #047857; }
+.notice { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 10px; margin: 20px 0; }
+.notice-error { color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; }
+.notice-success { color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; }
+.notice button { background: transparent; border: 0; cursor: pointer; font-size: 22px; color: inherit; }
+.loading-panel { min-height: 145px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; padding: 24px; background: white; border: 1px solid #e3e9f2; border-radius: 14px; }
+.spinner { display: inline-block; width: 34px; height: 34px; border: 4px solid #dbeafe; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.75s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.pending-card { opacity: 0.72; border-style: dashed; }
+.pending-label { color: #1d4ed8; font-weight: 650; font-size: 13px; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }

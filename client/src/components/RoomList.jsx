@@ -1,6 +1,8 @@
 import RoomForm from './RoomForm.jsx';
 
-export default function RoomList({ rooms, editingRoom, onEdit, onDelete, onSave, onCancel }) {
+export default function RoomList({
+  rooms, editingRoom, onEdit, onDelete, onSave, onCancel, canEdit, busy
+}) {
   if (rooms.length === 0) {
     return (
       <div className="empty">
@@ -12,7 +14,9 @@ export default function RoomList({ rooms, editingRoom, onEdit, onDelete, onSave,
   return (
     <div className="room-grid">
       {rooms.map(room => (
-        <article key={room.id} className={editingRoom?.id === room.id ? 'room-card editing-card' : 'room-card'}>
+        <article key={room.id}
+          className={'room-card' + (editingRoom?.id === room.id ? ' editing-card' : '') +
+            (room.pending ? ' pending-card' : '')}>
           {editingRoom?.id === room.id ? (
             <RoomForm room={room} onSave={onSave} onCancel={onCancel} />
           ) : (
@@ -26,12 +30,13 @@ export default function RoomList({ rooms, editingRoom, onEdit, onDelete, onSave,
               <h3>{room.name}</h3>
               <p className="muted">{room.location} · {room.floor} этаж</p>
               <p>Вместимость: <strong>{room.capacity} чел.</strong></p>
-              <p className="description">
-                {room.description || 'Описание не указано'}
-              </p>
+              <p className="description">{room.description || 'Описание не указано'}</p>
+              {room.pending && <p className="pending-label" role="status">Сохранение...</p>}
               <div className="card-actions">
-                <button className="secondary" onClick={() => onEdit(room)}>Редактировать</button>
-                <button className="danger" onClick={() => onDelete(room.id)}>Удалить</button>
+                <button className="secondary" onClick={() => onEdit(room)}
+                  disabled={!canEdit || busy || room.pending}>Редактировать</button>
+                <button className="danger" onClick={() => onDelete(room.id)}
+                  disabled={!canEdit || busy || room.pending}>Удалить</button>
               </div>
             </>
           )}
