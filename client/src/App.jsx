@@ -135,7 +135,7 @@ export default function App() {
   }, [profile?.id, activeTab, isAdmin, loadBookings, loadUsers]);
 
   useEffect(() => {
-    document.title = profile ? 'Личный кабинет — BookingSpace' : 'Вход — BookingSpace';
+    document.title = profile ? 'Личный кабинет — Переговория' : 'Вход — Переговория';
   }, [profile]);
 
   function closeForm() { setEditingRoom(null); setFormOpen(false); setDraft(null); }

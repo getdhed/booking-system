@@ -4,10 +4,9 @@ import { registerAccount, signIn, getErrorMessage } from '../api.js';
 function Brand({ large = false }) {
   return <div className={'brand ' + (large ? 'brand-large' : '')}>
     <div className="brand-symbol"><svg width="27" height="27" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <rect x="4" y="4" width="24" height="24" rx="7" stroke="currentColor" strokeWidth="2.4"/>
-      <path d="M11 11h6a4 4 0 0 1 0 8h-6V11Zm0 8h8a3.5 3.5 0 0 1 0 7h-8v-7Z" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round"/>
+      <path d="M8 26V7h16v19M8 13h16" stroke="currentColor" strokeWidth="2.3" strokeLinecap="square" strokeLinejoin="miter"/>
     </svg></div>
-    <div><strong>Booking<span>Space</span></strong>{large && <small>Удобное бронирование помещений</small>}</div>
+    <div><strong>Переговория<span>.</span></strong>{large && <small>Пространство для ваших встреч</small>}</div>
   </div>;
 }
 
@@ -86,6 +85,6 @@ export default function AuthPage({ mode, onNavigate, onAuthenticated }) {
         </button>
       </div>
     </div>
-    <footer className="auth-footer">BookingSpace · Система бронирования помещений</footer>
+    <footer className="auth-footer">Переговория · Пространство для ваших встреч</footer>
   </main>;
 }
