@@ -62,8 +62,8 @@ jobs:
       LAB5_PASSWORD: ci-admin-password
       LAB5_USER_EMAIL: ci-user@example.test
       LAB5_USER_PASSWORD: ci-user-password
-      ROOM_UPLOAD_DIR: ${{ runner.temp }}/booking-test-uploads
-      LAB5_UPLOAD_DIR: ${{ runner.temp }}/booking-test-uploads
+      ROOM_UPLOAD_DIR: /tmp/booking-test-uploads
+      LAB5_UPLOAD_DIR: /tmp/booking-test-uploads
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
