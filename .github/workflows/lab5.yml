@@ -25,6 +25,7 @@ jobs:
           node --check controllers/bookingController.js
           node --check routes/roomRoutes.js
           node --check scripts/lab5-smoke-test.mjs
+          node --check scripts/lab5-booking-test.mjs
       - name: Install React dependencies
         working-directory: client
         run: npm install --no-audit --no-fund
@@ -86,10 +87,11 @@ jobs:
           done
           cat "$RUNNER_TEMP/booking-server.log"
           exit 1
-      - name: Check room CRUD and photo uploads
+      - name: Check room CRUD, photo uploads and booking review
         run: |
           node scripts/lab5-smoke-test.mjs
           node scripts/lab5-upload-test.mjs
+          node scripts/lab5-booking-test.mjs
       - name: Stop test server
         if: always()
         run: |

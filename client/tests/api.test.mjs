@@ -176,3 +176,17 @@ test('Справочник удобств загружается из API, ош�
   globalThis.fetch = async () => json({error:'Photo exceeds 5 MB'}, 413);
   await assert.rejects(api.uploadRoomPhotos([new File(['x'], 'x.jpg')]), error => error.status === 413 && error.message.includes('5 МБ'));
 });
+
+test('Рассмотрение заявки отправляет PATCH с JWT, решение и изменённое время; ошибки сохраняют понятный текст', async () => {
+  const { api, storage } = await setup(async (url, options) => {
+    assert.equal(url, 'http://api.test/bookings/17');
+    assert.equal(options.method, 'PATCH');
+    assert.equal(options.headers.Authorization, 'Bearer admin-token');
+    assert.deepEqual(JSON.parse(options.body), { status: 'rejected', notes: 'Согласуем другой день', startTime: '2026-12-02T12:00:00Z' });
+    return json({ id: 17, status: 'rejected' });
+  });
+  storage.set('booking-system-access-token', 'admin-token');
+  assert.equal((await api.updateBooking(17, {status:'rejected',notes:'Согласуем другой день',startTime:'2026-12-02T12:00:00Z'})).status, 'rejected');
+  globalThis.fetch = async () => json({error:'Attendee count exceeds room capacity'}, 400);
+  await assert.rejects(api.updateBooking(17, {}), /вместимость помещения/);
+});

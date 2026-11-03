@@ -2098,3 +2098,35 @@ textarea {
 }
 
 @media(max-width:580px) { .amenity-checkbox-grid { grid-template-columns: minmax(0,1fr); } }
+
+/* Рассмотрение заявок администратором */
+.booking-filters { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 24px; }
+.booking-filter { display:flex; align-items:center; gap:10px; min-height:44px; padding:10px 15px; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:8px; font-size:14px; }
+.booking-filter span { min-width:22px; padding:2px 6px; border-radius:5px; background:rgba(70,45,25,.07); font-weight:700; font-variant-numeric:tabular-nums; }
+.booking-filter.selected { background:#eee0d5; border-color:#b67a56; color:#603c29; }
+.booking-filter:hover { border-color:#b67a56; }
+.bookings-table td { vertical-align:top; }
+.bookings-table td:first-child { min-width:220px; max-width:340px; overflow-wrap:anywhere; }
+.booking-email { display:block; margin-top:6px; color:var(--blue); overflow-wrap:anywhere; }
+.booking-time { min-width:185px; }
+.booking-note { padding:10px 12px; margin:12px 0 0; background:#f2ece5; border-radius:6px; font-size:14px; white-space:pre-wrap; }
+.data-table .booking-note strong { display:inline; font-size:inherit; }
+.table-status.rejected { background:#f9e3df; color:#983c2e; }
+.table-status.pending { background:#fff0cd; color:#85551b; }
+.booking-review { padding:8px; }
+.booking-review h2 { margin:6px 0 0; }
+.booking-contact { display:grid; gap:5px; margin:18px 0 24px; padding:18px; background:#f1e9df; border-radius:8px; overflow-wrap:anywhere; }
+.booking-contact a { color:var(--blue); }
+.booking-contact p { margin:5px 0 0; color:var(--muted); font-size:14px; }
+.review-fields { display:grid; gap:18px; padding:0; margin:0; border:0; min-width:0; }
+.review-fields label { display:flex; flex-direction:column; gap:8px; font-size:14px; font-weight:500; min-width:0; }
+.review-fields input, .review-fields select, .review-fields textarea { width:100%; min-width:0; }
+.review-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; margin-top:24px; }
+.review-hint { margin:16px 0 0; font-size:13px; }
+@media(max-width:640px) {
+  .booking-filters { gap:6px; }
+  .booking-filter { flex:1 1 145px; justify-content:space-between; }
+  .booking-review { padding:0; }
+  .review-actions { display:grid; grid-template-columns:1fr 1fr; }
+  .review-actions button { padding:10px; font-size:14px; }
+}

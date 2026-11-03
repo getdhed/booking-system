@@ -32,14 +32,24 @@ function httpError(status, responseData) {
   const serverMessage = responseData && responseData.error;
   let message = "Ошибка HTTP " + status + ".";
 
-  if (status === 400) message = "Сервер отклонил данные. Проверьте поля формы.";
+  if (status === 400) message = {
+    "Invalid room": "Выберите помещение.",
+    "Invalid booking time": "Проверьте дату: окончание должно быть позже начала.",
+    "Invalid booking purpose": "Укажите цель бронирования: до 500 символов.",
+    "Invalid booking status": "Выберите допустимый статус заявки.",
+    "Invalid booking notes": "Комментарий должен быть не длиннее 2000 символов.",
+    "Room not found": "Выбранное помещение больше не существует.",
+    "Attendee count exceeds room capacity": "Количество участников превышает вместимость помещения.",
+    "Room is unavailable": "Помещение недоступно для бронирования. Выберите другое.",
+    "Booking owner cannot be changed": "Нельзя изменить заявителя у существующей заявки.",
+  }[serverMessage] || "Сервер отклонил данные. Проверьте поля формы.";
   if (status === 401)
     message = "Неверные учётные данные или истёк срок действия сессии.";
   if (status === 403)
     message = "Недостаточно прав: действие доступно только администратору.";
   if (status === 413)
     message = "Фото слишком большое. Максимум — 5 МБ на файл.";
-  if (status === 404) message = "Помещение или адрес запроса не найден.";
+  if (status === 404) message = "Запись или адрес запроса не найдены.";
   if (status === 409) {
     message =
       serverMessage === "User with this email already exists"
@@ -140,6 +150,10 @@ export function registerAccount(data) {
 
 export function createBooking(data) {
   return request("/bookings", { method: "POST", body: data });
+}
+
+export function updateBooking(id, data) {
+  return request("/bookings/" + encodeURIComponent(id), { method: "PATCH", body: data });
 }
 
 export function getMyBookings(signal) {

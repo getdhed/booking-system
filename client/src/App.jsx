@@ -6,6 +6,7 @@ import RoomEditorPage from "./components/RoomEditorPage.jsx";
 import RoomPage from "./components/RoomPage.jsx";
 import RoomList from "./components/RoomList.jsx";
 import BookingForm from "./components/BookingForm.jsx";
+import BookingWorkspace from "./components/BookingWorkspace.jsx";
 import AuthPage, { Brand } from "./components/AuthPage.jsx";
 import {
   hasSession,
@@ -15,7 +16,6 @@ import {
   addRoom,
   updateRoom,
   deleteRoom,
-  getMyBookings,
   createBooking,
   signOut,
 } from "./api.js";
@@ -104,7 +104,6 @@ export default function App() {
     }
     setProfile(null);
     setRooms([]);
-    setBookings([]);
     setNotice(null);
     setSearch("");
     setRoomType("all");
@@ -132,9 +131,6 @@ export default function App() {
   const [deletingRoom, setDeletingRoom] = useState(null);
   const [bookingBusy, setBookingBusy] = useState(false);
 
-  const [bookings, setBookings] = useState([]);
-  const [bookingsLoading, setBookingsLoading] = useState(false);
-  const [bookingsError, setBookingsError] = useState("");
 
   const isAdmin = profile?.role === "admin";
 
@@ -159,23 +155,6 @@ export default function App() {
     if (profile) void loadRooms();
     return () => controllerRef.current?.abort();
   }, [profile?.id, loadRooms]);
-
-  const loadBookings = useCallback(async () => {
-    setBookingsLoading(true);
-    setBookingsError("");
-    try {
-      const data = await getMyBookings();
-      setBookings(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setBookingsError(getErrorMessage(err));
-    } finally {
-      setBookingsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (profile && activeTab === "bookings") void loadBookings();
-  }, [profile?.id, activeTab, loadBookings]);
 
   useEffect(() => {
     document.title = profile
@@ -390,7 +369,7 @@ export default function App() {
               onClick={() => setActiveTab("bookings")}
             >
               <Icon name="calendar" />
-              Мои бронирования
+              {isAdmin ? "Заявки и бронирования" : "Мои бронирования"}
             </button>
           </nav>
           <AccountMenu profile={profile} onLogout={logout} />
@@ -594,106 +573,8 @@ export default function App() {
           )}
 
           {activeTab === "bookings" && (
-            <>
-              <div className="workspace-heading">
-                <div>
-                  <span className="section-eyebrow">БРОНИРОВАНИЯ</span>
-                  <h1>{isAdmin ? "Все бронирования" : "Мои бронирования"}</h1>
-                  <p>
-                    {isAdmin
-                      ? "Просмотр записей всех пользователей."
-                      : "История бронирований вашей учётной записи."}
-                  </p>
-                </div>
-                <button
-                  className="secondary"
-                  disabled={bookingsLoading}
-                  onClick={loadBookings}
-                >
-                  <Icon name="refresh" />
-                  Обновить
-                </button>
-              </div>
-              {bookingsLoading ? (
-                <div className="loading-panel" role="status">
-                  <span className="spinner" />
-                  Загрузка...
-                </div>
-              ) : bookingsError ? (
-                <div className="loading-panel" role="alert">
-                  <p className="error">{bookingsError}</p>
-                  <button className="secondary" onClick={loadBookings}>
-                    Повторить
-                  </button>
-                </div>
-              ) : bookings.length ? (
-                <div className="data-table-wrap">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>№</th>
-                        <th>Помещение</th>
-                        {isAdmin && <th>Пользователь</th>}
-                        <th>Начало</th>
-                        <th>Окончание</th>
-                        <th>Статус</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {bookings.map((booking) => (
-                        <tr key={booking.id}>
-                          <td>#{booking.id}</td>
-                          <td>
-                            <strong>
-                              {booking.room?.name ||
-                                "Помещение №" + booking.roomId}
-                            </strong>
-                            <span className="table-detail">
-                              {booking.purpose}
-                            </span>
-                          </td>
-                          {isAdmin && <td>{booking.user?.fullName || "—"}</td>}
-                          <td>
-                            {new Date(booking.startTime).toLocaleString(
-                              "ru-RU",
-                            )}
-                          </td>
-                          <td>
-                            {new Date(booking.endTime).toLocaleString("ru-RU")}
-                          </td>
-                          <td>
-                            <span className={"table-status " + booking.status}>
-                              {{
-                                pending: "На рассмотрении",
-                                confirmed: "Подтверждено",
-                                cancelled: "Отменено",
-                                completed: "Завершено",
-                              }[booking.status] || booking.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="empty">
-                  <Icon name="calendar" />
-                  <h2>Бронирований пока нет</h2>
-                  <p>
-                    {isAdmin
-                      ? "Заявки пользователей появятся здесь."
-                      : "Выберите подходящее помещение в каталоге и отправьте первую заявку."}
-                  </p>
-                  <button
-                    className="secondary"
-                    onClick={() => setActiveTab("rooms")}
-                  >
-                    Открыть каталог
-                  </button>
-                </div>
-              )}
-            </>
+            <BookingWorkspace key={profile.id} isAdmin={isAdmin} rooms={rooms}
+              roomsLoading={loading} roomsError={error} reloadRooms={loadRooms} />
           )}
 
           {editorOpen &&

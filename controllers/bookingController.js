@@ -19,6 +19,28 @@ const bookingInclude = [
   }
 ];
 
+const statuses = ['pending', 'confirmed', 'rejected', 'cancelled', 'completed'];
+
+async function validateBooking(data) {
+  if (!Number.isInteger(data.roomId) || data.roomId <= 0)
+    return 'Invalid room';
+  if (!data.startTime || !data.endTime || !Number.isFinite(new Date(data.startTime).getTime()) ||
+      !Number.isFinite(new Date(data.endTime).getTime()) ||
+      new Date(data.endTime) <= new Date(data.startTime))
+    return 'Invalid booking time';
+  if (typeof data.purpose !== 'string' || !data.purpose.trim() || data.purpose.length > 500)
+    return 'Invalid booking purpose';
+  if (!statuses.includes(data.status)) return 'Invalid booking status';
+  if (data.notes != null && (typeof data.notes !== 'string' || data.notes.length > 2000))
+    return 'Invalid booking notes';
+  const room = await Room.findByPk(data.roomId);
+  if (!room) return 'Room not found';
+  if (!Number.isInteger(data.attendeeCount) || data.attendeeCount < 1 || data.attendeeCount > room.capacity)
+    return 'Attendee count exceeds room capacity';
+  if (data.status === 'confirmed' && !room.isActive) return 'Room is unavailable';
+  return null;
+}
+
 async function getAllBookings(req, res, next) {
   try {
     const bookings = await Booking.findAll({
@@ -73,7 +95,7 @@ async function createBooking(req, res, next) {
       });
     }
 
-    const booking = await Booking.create({
+    const data = {
       userId: req.user.id,
       roomId,
       startTime,
@@ -82,7 +104,12 @@ async function createBooking(req, res, next) {
       attendeeCount,
       // Обычный пользователь не может выдать себе подтверждённое бронирование.
       status: req.user.role === 'admin' && status ? status : 'pending'
-    });
+    };
+    const validationError = await validateBooking(data);
+    if (validationError) return res.status(400).json({ error: validationError });
+    const room = await Room.findByPk(roomId);
+    if (!room.isActive) return res.status(400).json({ error: 'Room is unavailable' });
+    const booking = await Booking.create({ ...data, purpose: purpose.trim() });
 
     const createdBooking = await Booking.findByPk(booking.id, {
       include: bookingInclude
@@ -112,31 +139,16 @@ async function updateBooking(req, res, next) {
       });
     }
 
-    const {userId,roomId,startTime,endTime,purpose,attendeeCount, status} = req.body;
-
-    if (
-      userId == null ||
-      roomId == null ||
-      !startTime ||
-      !endTime ||
-      !purpose ||
-      attendeeCount == null ||
-      !status
-    ) {
-      return res.status(400).json({
-        error: 'All fields are required'
-      });
-    }
-
-    await booking.update({
-      userId,
-      roomId,
-      startTime,
-      endTime,
-      purpose,
-      attendeeCount,
-      status
-    });
+    // Владелец заявки не меняется при согласовании времени и условий.
+    if (req.body.userId !== undefined && req.body.userId !== booking.userId)
+      return res.status(400).json({ error: 'Booking owner cannot be changed' });
+    const fields = ['roomId', 'startTime', 'endTime', 'purpose', 'attendeeCount', 'status', 'notes'];
+    const data = Object.fromEntries(fields.map(field => [field,
+      req.body[field] !== undefined ? req.body[field] : booking[field]
+    ]));
+    const validationError = await validateBooking(data);
+    if (validationError) return res.status(400).json({ error: validationError });
+    await booking.update({ ...data, purpose: data.purpose.trim(), notes: data.notes?.trim() || null });
 
     const updatedBooking = await Booking.findByPk(id, {
       include: bookingInclude
