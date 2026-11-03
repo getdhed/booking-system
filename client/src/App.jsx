@@ -370,5 +370,9 @@ export default function App() {
           </section></>}
       </main>
     </div>
+    <footer className="site-footer">
+      <strong>Переговория.</strong>
+      <span>Пространство для ваших встреч</span>
+    </footer>
   </div>;
 }
