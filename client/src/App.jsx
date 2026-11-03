@@ -245,34 +245,27 @@ export default function App() {
   }
 
   return <div className="dashboard-shell">
-    <aside className="sidebar">
-      <Brand />
-      <div className="nav-caption">РАБОЧЕЕ ПРОСТРАНСТВО</div>
-      <nav aria-label="Основная навигация">
-        <button className={'nav-link ' + (activeTab === 'rooms' ? 'selected' : '')}
-          onClick={() => setActiveTab('rooms')}><span>▦</span>{isAdmin ? 'Управление помещениями' : 'Каталог помещений'}</button>
-        <button className={'nav-link ' + (activeTab === 'bookings' ? 'selected' : '')}
-          onClick={() => setActiveTab('bookings')}><span>▤</span>{isAdmin ? 'Все бронирования' : 'Мои бронирования'}</button>
-        {isAdmin && <button className={'nav-link ' + (activeTab === 'users' ? 'selected' : '')}
-          onClick={() => setActiveTab('users')}><span>♙</span>Пользователи</button>}
-        <button className={'nav-link ' + (activeTab === 'profile' ? 'selected' : '')}
-          onClick={() => setActiveTab('profile')}><span>◉</span>Мой профиль</button>
-      </nav>
-      <div className="sidebar-bottom">
-        <div className="sidebar-account"><div className="avatar">{profile.fullName?.charAt(0)?.toUpperCase() || 'U'}</div>
-          <div><strong>{profile.fullName}</strong><span>{roleLabel(profile.role)}</span></div></div>
-        <button className="logout-button" onClick={logout}>↪ &nbsp; Выйти из аккаунта</button>
+    <header className="site-header">
+      <div className="site-header-inner">
+        <div className="site-brand"><Brand /></div>
+        <nav className="site-nav" aria-label="Основная навигация">
+          <button className={'nav-link ' + (activeTab === 'rooms' ? 'selected' : '')}
+            onClick={() => setActiveTab('rooms')}>Помещения</button>
+          <button className={'nav-link ' + (activeTab === 'bookings' ? 'selected' : '')}
+            onClick={() => setActiveTab('bookings')}>{isAdmin ? 'Бронирования' : 'Мои бронирования'}</button>
+          {isAdmin && <button className={'nav-link ' + (activeTab === 'users' ? 'selected' : '')}
+            onClick={() => setActiveTab('users')}>Пользователи</button>}
+          <button className={'nav-link ' + (activeTab === 'profile' ? 'selected' : '')}
+            onClick={() => setActiveTab('profile')}>Профиль</button>
+        </nav>
+        <div className="site-account">
+          <div className="account-copy"><strong>{profile.fullName}</strong>
+            <span>{roleLabel(profile.role)}</span></div>
+          <button type="button" className="logout-button" onClick={logout}>Выйти</button>
+        </div>
       </div>
-    </aside>
+    </header>
     <div className="dashboard-main">
-      <header className="dashboard-header">
-        <div><span className="header-breadcrumb">BookingSpace</span><span className="breadcrumb-separator">/</span>
-          <strong>{activeTab === 'rooms' ? 'Помещения' : activeTab === 'bookings' ? 'Бронирования' :
-            activeTab === 'users' ? 'Пользователи' : 'Профиль'}</strong></div>
-        <div className="header-right"><span className={'role-pill ' + (isAdmin ? 'role-admin' : '')}>
-          {isAdmin ? '✦ Администратор' : '✓ Пользователь'}</span>
-          <div className="avatar avatar-small">{profile.fullName?.charAt(0)?.toUpperCase() || 'U'}</div></div>
-      </header>
       <main className="workspace">
         {notice && <div className={'notice ' + (notice.type === 'error' ? 'notice-error' : 'notice-success')}
           role={notice.type === 'error' ? 'alert' : 'status'}>
