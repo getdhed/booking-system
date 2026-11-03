@@ -43,7 +43,7 @@ export default function AuthPage({ mode, onNavigate, onAuthenticated }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [registered, setRegistered] = useState(false);
   function change(event) {
     setValues(previous => ({ ...previous, [event.target.name]: event.target.value }));
     setError('');
@@ -57,26 +57,44 @@ export default function AuthPage({ mode, onNavigate, onAuthenticated }) {
       setError('Пароль должен содержать не менее 8 символов.'); return;
     }
     setBusy(true); setError('');
+    let accountCreated = false;
     try {
+      const email = values.email.trim().toLowerCase();
       if (register) {
+        // Создание учётной записи не выдаёт JWT, поэтому сразу выполняем вход.
         await registerAccount({
-          fullName: values.fullName.trim(), email: values.email.trim().toLowerCase(),
+          fullName: values.fullName.trim(),
+          email,
           password: values.password
         });
-        setSuccess('Аккаунт создан. Теперь войдите с помощью почты и пароля.');
-      } else {
-        await signIn(values.email.trim().toLowerCase(), values.password);
-        await onAuthenticated();
+        accountCreated = true;
       }
-    } catch (err) { setError(getErrorMessage(err)); }
-    finally { setBusy(false); }
+
+      // Используем обычный вход: signIn сохраняет access/refresh токены.
+      await signIn(email, values.password);
+      const authenticated = await onAuthenticated();
+      if (!authenticated) {
+        throw new Error('Не удалось открыть личный кабинет. Попробуйте войти ещё раз.');
+      }
+    } catch (err) {
+      if (accountCreated) {
+        // Не предлагаем зарегистрироваться повторно: пользователь уже есть в БД.
+        setRegistered(true);
+        setError('Аккаунт создан, но автоматический вход не удался. ' + getErrorMessage(err));
+      } else {
+        setError(getErrorMessage(err));
+      }
+    } finally { setBusy(false); }
   }
   return <main className={'auth-layout ' + (register ? 'auth-register' : 'auth-login')}>
     <div className="auth-card">
       <div className="auth-brand"><Brand large /></div>
       <h1>{register ? 'Регистрация' : 'Вход'}</h1>
-      {success ? <div className="auth-success" role="status">{success}
-        <button type="button" className="primary full-width" onClick={() => onNavigate('/login')}>Перейти ко входу</button>
+      {registered ? <div className="auth-success" role="status">
+        <p className="auth-error" role="alert">{error}</p>
+        <button type="button" className="primary full-width" onClick={() => onNavigate('/login')}>
+          Перейти ко входу
+        </button>
       </div> :
       <form className="auth-form" onSubmit={submit}>
         {register && <div className="auth-field">

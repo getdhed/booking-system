@@ -33,9 +33,11 @@ export default function App() {
       setProfile(user);
       setActiveTab('rooms');
       window.history.replaceState({}, '', '/');
+      return true;
     } catch (error) {
       setProfile(null);
       setAuthError(getErrorMessage(error));
+      return false;
     } finally { setChecking(false); }
   }, []);
 
