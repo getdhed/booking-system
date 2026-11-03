@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import RoomForm from './components/RoomForm.jsx';
 import RoomList from './components/RoomList.jsx';
+import BookingForm from './components/BookingForm.jsx';
 import AuthPage, { Brand } from './components/AuthPage.jsx';
 import {
   hasSession, getProfile, getErrorMessage, fetchRooms, addRoom, updateRoom, deleteRoom,
-  getMyBookings, getUsers, signOut
+  getMyBookings, getUsers, createBooking, signOut
 } from './api.js';
 
 function currentRoute() {
@@ -73,6 +74,8 @@ export default function App() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
   const [draft, setDraft] = useState(null);
+  const [bookingRoom, setBookingRoom] = useState(null);
+  const [bookingBusy, setBookingBusy] = useState(false);
 
   const [bookings, setBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
@@ -205,6 +208,19 @@ export default function App() {
     } finally { setMutationPending(false); }
   }
 
+  async function submitBooking(data) {
+    if (isAdmin || bookingBusy) return;
+    setBookingBusy(true);
+    try {
+      await createBooking(data);
+      setBookingRoom(null);
+      setNotice({ type: 'success', message: 'Заявка создана. Посмотрите её в разделе «Мои бронирования».' });
+      setActiveTab('bookings');
+    } catch (err) {
+      setNotice({ type: 'error', message: getErrorMessage(err) });
+    } finally { setBookingBusy(false); }
+  }
+
   const roomTypes = [...new Set(rooms.map(room => room.name).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, 'ru'));
   const selectedType = roomTypes.includes(roomType) ? roomType : 'all';
@@ -278,6 +294,8 @@ export default function App() {
             <div className="stat-card"><span>Недоступно</span><strong>{rooms.filter(r => !r.isActive).length}</strong><small>Временно закрыто</small></div>
           </div>
           {formOpen && isAdmin && <section className="panel"><RoomForm room={null} initialValues={draft} onSave={saveRoom} onCancel={closeForm} /></section>}
+          {bookingRoom && !isAdmin && <BookingForm room={bookingRoom} busy={bookingBusy}
+            onCancel={() => setBookingRoom(null)} onCreate={submitBooking} />}
           <section className="panel search-panel">
             <label className="search-field">Поиск помещения
               <input value={search} type="search" placeholder="Название, номер или расположение..."
@@ -303,7 +321,8 @@ export default function App() {
               <button className="secondary" onClick={loadRooms}>Повторить</button></div> :
             <RoomList rooms={filteredRooms} editingRoom={editingRoom} onEdit={room => {setEditingRoom(room);setFormOpen(false);}}
               onDelete={removeRoom} onSave={saveRoom} onCancel={closeForm}
-              canEdit={isAdmin} busy={mutationPending} />}
+              canEdit={isAdmin} busy={mutationPending || bookingBusy}
+              onBook={room => setBookingRoom(room)} />}
           {mutationPending && <p className="muted" role="status">Сохранение изменений на сервере...</p>}
         </>}
 
