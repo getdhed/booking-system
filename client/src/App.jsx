@@ -289,7 +289,9 @@ export default function App() {
           {formOpen && isAdmin && <section className="panel"><RoomForm room={null} initialValues={draft} onSave={saveRoom} onCancel={closeForm} /></section>}
           {bookingRoom && !isAdmin && <BookingForm room={bookingRoom} busy={bookingBusy}
             onCancel={() => setBookingRoom(null)} onCreate={submitBooking} />}
-          <section className="panel search-panel">
+          <div className="catalog-layout">
+            <aside className="catalog-filters">
+              <section className="panel search-panel">
             <label className="search-field">Поиск помещения
               <input value={search} type="search" placeholder="Название, номер или расположение..."
                 onChange={event => setSearch(event.target.value)} /></label>
@@ -307,7 +309,9 @@ export default function App() {
                 <option value="capacity">По вместимости ↓</option>
               </select></label>
             </div>
-          </section>
+              </section>
+            </aside>
+            <section className="catalog-results">
           <div className="results-heading"><h2>Список помещений</h2><span className="muted">Найдено: {filteredRooms.length}</span></div>
           {loading ? <div className="loading-panel" role="status"><span className="spinner" />Загрузка с сервера...</div> :
             error ? <div className="loading-panel" role="alert"><p className="error">{error}</p>
@@ -316,6 +320,8 @@ export default function App() {
               onDelete={removeRoom} onSave={saveRoom} onCancel={closeForm}
               canEdit={isAdmin} busy={mutationPending || bookingBusy}
               onBook={room => setBookingRoom(room)} />}
+            </section>
+          </div>
           {mutationPending && <p className="muted" role="status">Сохранение изменений на сервере...</p>}
         </>}
 
