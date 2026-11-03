@@ -1,7 +1,9 @@
 // Единая точка для HTTP-запросов. Адрес задаётся в client/.env.
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
-const ACCESS_KEY = 'booking-system-access-token';
-const REFRESH_KEY = 'booking-system-refresh-token';
+const API_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
+const ACCESS_KEY = "booking-system-access-token";
+const REFRESH_KEY = "booking-system-refresh-token";
 
 let pendingRefresh = null;
 
@@ -15,9 +17,12 @@ function clearSession() {
 }
 
 function saveSession(data) {
-  if (!data || typeof data.accessToken !== 'string' ||
-      typeof data.refreshToken !== 'string') {
-    throw new Error('Сервер не вернул токены авторизации.');
+  if (
+    !data ||
+    typeof data.accessToken !== "string" ||
+    typeof data.refreshToken !== "string"
+  ) {
+    throw new Error("Сервер не вернул токены авторизации.");
   }
   localStorage.setItem(ACCESS_KEY, data.accessToken);
   localStorage.setItem(REFRESH_KEY, data.refreshToken);
@@ -25,18 +30,24 @@ function saveSession(data) {
 
 function httpError(status, responseData) {
   const serverMessage = responseData && responseData.error;
-  let message = 'Ошибка HTTP ' + status + '.';
+  let message = "Ошибка HTTP " + status + ".";
 
-  if (status === 400) message = 'Сервер отклонил данные. Проверьте поля формы.';
-  if (status === 401) message = 'Неверные учётные данные или истёк срок действия сессии.';
-  if (status === 403) message = 'Недостаточно прав: действие доступно только администратору.';
-  if (status === 404) message = 'Помещение или адрес запроса не найден.';
+  if (status === 400) message = "Сервер отклонил данные. Проверьте поля формы.";
+  if (status === 401)
+    message = "Неверные учётные данные или истёк срок действия сессии.";
+  if (status === 403)
+    message = "Недостаточно прав: действие доступно только администратору.";
+  if (status === 404) message = "Помещение или адрес запроса не найден.";
   if (status === 409) {
-    message = serverMessage === 'Room has bookings and cannot be deleted'
-      ? 'Нельзя удалить помещение, для которого существуют бронирования.'
-      : 'Конфликт данных: возможно, такой номер помещения уже существует.';
+    message =
+      serverMessage === "User with this email already exists"
+        ? "Аккаунт с такой почтой уже существует. Войдите или используйте другую почту."
+        : serverMessage === "Room has bookings and cannot be deleted"
+          ? "Нельзя удалить помещение, для которого существуют бронирования."
+          : "Конфликт данных: возможно, такой номер помещения уже существует.";
   }
-  if (status >= 500) message = 'Ошибка сервера (' + status + '). Попробуйте позже.';
+  if (status >= 500)
+    message = "Ошибка сервера (" + status + "). Попробуйте позже.";
 
   const error = new Error(message);
   error.status = status;
@@ -44,12 +55,12 @@ function httpError(status, responseData) {
 }
 
 async function request(path, options = {}) {
-  const { method = 'GET', body, signal, auth = true, retry = true } = options;
+  const { method = "GET", body, signal, auth = true, retry = true } = options;
   const headers = {};
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (body !== undefined) headers["Content-Type"] = "application/json";
 
   const accessToken = localStorage.getItem(ACCESS_KEY);
-  if (auth && accessToken) headers.Authorization = 'Bearer ' + accessToken;
+  if (auth && accessToken) headers.Authorization = "Bearer " + accessToken;
 
   let response;
   try {
@@ -57,11 +68,13 @@ async function request(path, options = {}) {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
-      signal
+      signal,
     });
   } catch (error) {
-    if (error.name === 'AbortError') throw error;
-    throw new Error('Нет соединения с сервером. Проверьте запуск Express и адрес API.');
+    if (error.name === "AbortError") throw error;
+    throw new Error(
+      "Нет соединения с сервером. Проверьте подключение и повторите попытку.",
+    );
   }
 
   // При истечении access token пробуем один раз обновить его refresh token.
@@ -70,22 +83,27 @@ async function request(path, options = {}) {
     if (retry && refreshToken && !signal?.aborted) {
       try {
         if (!pendingRefresh) {
-          pendingRefresh = request('/auth/refresh', {
-            method: 'POST', body: { refreshToken }, auth: false, retry: false
-          }).then(data => {
-            saveSession(data);
-          }).finally(() => {
-            pendingRefresh = null;
-          });
+          pendingRefresh = request("/auth/refresh", {
+            method: "POST",
+            body: { refreshToken },
+            auth: false,
+            retry: false,
+          })
+            .then((data) => {
+              saveSession(data);
+            })
+            .finally(() => {
+              pendingRefresh = null;
+            });
         }
         await pendingRefresh;
         return request(path, { method, body, signal, auth, retry: false });
       } catch (error) {
         if (signal?.aborted) {
-          throw new DOMException('Запрос отменён', 'AbortError');
+          throw new DOMException("Запрос отменён", "AbortError");
         }
         clearSession();
-        const sessionError = new Error('Сессия истекла. Войдите повторно.');
+        const sessionError = new Error("Сессия истекла. Войдите повторно.");
         sessionError.status = 401;
         throw sessionError;
       }
@@ -103,44 +121,46 @@ async function request(path, options = {}) {
 }
 
 export function getProfile(signal) {
-  return request('/profile', { signal });
+  return request("/profile", { signal });
 }
 
 export function registerAccount(data) {
-  return request('/auth/register', { method: 'POST', body: data, auth: false });
+  return request("/auth/register", { method: "POST", body: data, auth: false });
 }
 
 export function createBooking(data) {
-  return request('/bookings', { method: 'POST', body: data });
+  return request("/bookings", { method: "POST", body: data });
 }
 
 export function getMyBookings(signal) {
-  return request('/bookings', { signal });
+  return request("/bookings", { signal });
 }
 
 export function getUsers(signal) {
-  return request('/users', { signal });
+  return request("/users", { signal });
 }
 
 export function fetchRooms(signal) {
-  return request('/rooms', { signal });
+  return request("/rooms", { signal });
 }
 
 export function addRoom(room) {
-  return request('/rooms', { method: 'POST', body: room });
+  return request("/rooms", { method: "POST", body: room });
 }
 
 export function updateRoom(id, room) {
-  return request('/rooms/' + id, { method: 'PUT', body: room });
+  return request("/rooms/" + id, { method: "PUT", body: room });
 }
 
 export function deleteRoom(id) {
-  return request('/rooms/' + id, { method: 'DELETE' });
+  return request("/rooms/" + id, { method: "DELETE" });
 }
 
 export async function signIn(email, password) {
-  const tokens = await request('/auth/login', {
-    method: 'POST', body: { email, password }, auth: false
+  const tokens = await request("/auth/login", {
+    method: "POST",
+    body: { email, password },
+    auth: false,
   });
   saveSession(tokens);
 }
@@ -149,8 +169,10 @@ export async function signOut() {
   const refreshToken = localStorage.getItem(REFRESH_KEY);
   try {
     if (refreshToken) {
-      await request('/auth/logout', {
-        method: 'POST', body: { refreshToken }, auth: false
+      await request("/auth/logout", {
+        method: "POST",
+        body: { refreshToken },
+        auth: false,
       });
     }
   } finally {
@@ -159,5 +181,7 @@ export async function signOut() {
 }
 
 export function getErrorMessage(error) {
-  return error instanceof Error ? error.message : 'Произошла неизвестная ошибка.';
+  return error instanceof Error
+    ? error.message
+    : "Произошла неизвестная ошибка.";
 }

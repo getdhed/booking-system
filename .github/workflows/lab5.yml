@@ -19,11 +19,14 @@ jobs:
         run: |
           node --check server.js
           node --check controllers/roomController.js
+          node --check controllers/bookingController.js
           node --check routes/roomRoutes.js
           node --check scripts/lab5-smoke-test.mjs
       - name: Install React dependencies
         working-directory: client
         run: npm install --no-audit --no-fund
+      - name: Test API client
+        run: node --test client/tests/api.test.mjs
       - name: Build React
         working-directory: client
         run: npm run build

@@ -22,6 +22,7 @@ const bookingInclude = [
 async function getAllBookings(req, res, next) {
   try {
     const bookings = await Booking.findAll({
+      where: req.user.role === 'admin' ? {} : { userId: req.user.id },
       include: bookingInclude,
       order: [['id', 'ASC']]
     });
