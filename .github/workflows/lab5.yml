@@ -1,0 +1,29 @@
+name: Lab 5 validation
+
+on:
+  push:
+    branches: ['25']
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check backend and smoke-test syntax
+        run: |
+          node --check server.js
+          node --check controllers/roomController.js
+          node --check routes/roomRoutes.js
+          node --check scripts/lab5-smoke-test.mjs
+      - name: Install React dependencies
+        working-directory: client
+        run: npm install --no-audit --no-fund
+      - name: Build React
+        working-directory: client
+        run: npm run build
