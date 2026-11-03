@@ -21,7 +21,8 @@ export default function RoomList({
             <RoomForm room={room} onSave={onSave} onCancel={onCancel} />
           ) : (
             <>
-              <div className="card-top">
+              <div className="room-details">
+                <div className="card-top">
                 <span className="room-number">№ {room.roomNumber}</span>
                 <span className={room.isActive ? 'status active' : 'status inactive'}>
                   {room.isActive ? 'Доступно' : 'Недоступно'}
@@ -32,6 +33,7 @@ export default function RoomList({
               <p>Вместимость: <strong>{room.capacity} чел.</strong></p>
               <p className="description">{room.description || 'Описание не указано'}</p>
               {room.pending && <p className="pending-label" role="status">Сохранение...</p>}
+              </div>
               <div className="card-actions">
                 {!canEdit && room.isActive && <button className="primary" disabled={busy || room.pending}
                   onClick={() => onBook(room)}>Забронировать</button>}
