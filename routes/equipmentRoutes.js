@@ -1,13 +1,10 @@
 const express = require('express');
-
-const {
-  getAllEquipment,
-  getEquipmentById,
-  createEquipment
-} = require('../controllers/equipmentController');
-
+const authorization = require('../middlewares/authorization');
+const requireAdmin = require('../middlewares/requireAdmin');
+const { getAllEquipment, getEquipmentById, createEquipment } = require('../controllers/equipmentController');
 const router = express.Router();
+router.use(authorization);
 router.get('/', getAllEquipment);
 router.get('/:id', getEquipmentById);
-router.post('/', createEquipment);
+router.post('/', requireAdmin, createEquipment);
 module.exports = router;

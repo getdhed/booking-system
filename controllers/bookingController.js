@@ -46,10 +46,8 @@ async function getBookingById(req, res, next) {
       include: bookingInclude
     });
 
-    if (!booking) {
-      return res.status(404).json({
-        error: 'Booking not found'
-      });
+    if (!booking || (req.user.role !== 'admin' && booking.userId !== req.user.id)) {
+      return res.status(404).json({ error: 'Booking not found' });
     }
 
     res.status(200).json(booking);
@@ -63,7 +61,6 @@ async function createBooking(req, res, next) {
     const {userId,roomId,startTime,endTime,purpose,attendeeCount,status} = req.body;
 
     if (
-      userId == null ||
       roomId == null ||
       !startTime ||
       !endTime ||
@@ -76,7 +73,7 @@ async function createBooking(req, res, next) {
     }
 
     const booking = await Booking.create({
-      userId,
+      userId: req.user.id,
       roomId,
       startTime,
       endTime,
