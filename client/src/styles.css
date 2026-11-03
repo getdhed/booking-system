@@ -1711,3 +1711,390 @@ textarea {
     font-size: 13px;
   }
 }
+
+/* Полноценная страница редактора: данные и фото слева, сохранение справа. */
+.room-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: 28px;
+}
+.room-editor-main {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.editor-section {
+  padding: 28px;
+  background: #fffdfa;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.editor-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 25px;
+}
+.editor-section-heading > span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  background: #f3e9df;
+  color: #9a6542;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.editor-section h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.editor-section h2 small {
+  margin-left: 7px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.editor-section-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.room-editor-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+.room-editor-form textarea {
+  resize: vertical;
+}
+.editor-save-panel {
+  position: sticky;
+  top: 24px;
+  border: 1px solid #dcd0c2;
+  background: #fffdfa;
+  border-radius: 14px;
+  padding: 24px;
+}
+.editor-save-panel h2 {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 600;
+}
+.room-editor-form .editor-availability {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+.editor-availability input {
+  width: 18px;
+  min-height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--blue);
+  flex-shrink: 0;
+}
+.editor-save-panel > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 14px 0 24px;
+}
+.editor-save-panel > button {
+  margin-top: 10px;
+}
+.editor-totals {
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+  margin: 0 0 15px;
+}
+.editor-totals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.editor-totals dt {
+  font-size: 13px;
+  color: var(--muted);
+}
+.editor-totals dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.photo-upload-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+  padding: 22px;
+  border: 1px dashed #cbb49c;
+  border-radius: 10px;
+  background: #fcf8f3;
+}
+.photo-upload-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #f0e3d7;
+  color: #a26c47;
+}
+.photo-upload-area > div {
+  flex: 1 1 230px;
+}
+.photo-upload-area strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.photo-upload-area p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 7px 0 0;
+}
+.room-editor-form .photo-upload-button {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  background: white;
+}
+.photo-upload-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.photo-upload-area > small {
+  flex-basis: 100%;
+  color: #8f7e6e;
+  font-size: 11px;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+}
+.photo-upload-area:has(input:focus-visible) {
+  outline: 3px solid #bb8762;
+  outline-offset: 3px;
+}
+.editable-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.editable-photo {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+}
+.editable-photo.main-photo {
+  border-color: #b67c54;
+  box-shadow: 0 0 0 1px #b67c54;
+}
+.editable-photo > .room-preview {
+  aspect-ratio: 4/3;
+}
+.editable-photo .preview-caption {
+  font-size: 10px;
+  left: 6px;
+  bottom: 6px;
+}
+.photo-remove {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 27px;
+  height: 27px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff9;
+  color: #4a3024;
+  font-size: 21px;
+  backdrop-filter: blur(5px);
+}
+.photo-remove:hover {
+  background: #fff;
+}
+.photo-set-main {
+  width: 100%;
+  min-height: 39px;
+  padding: 7px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: #fff;
+  color: #7a695b;
+  font-size: 11px;
+}
+.photo-set-main[aria-pressed="true"] {
+  color: #8f4f30;
+  background: #f8eee4;
+  font-weight: 600;
+}
+.amenity-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.room-editor-form .amenity-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px;
+  border: 1px solid #e5ddd3;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.amenity-option input {
+  width: 17px;
+  min-height: 17px;
+  margin: 0;
+  accent-color: var(--blue);
+  flex-shrink: 0;
+}
+.amenity-option > svg {
+  width: 19px;
+  height: 19px;
+  color: #a2907e;
+}
+.room-editor-form .amenity-option.chosen {
+  background: #f7efe7;
+  border-color: #bb8a68;
+  color: #805335;
+}
+.amenity-option.chosen > svg {
+  color: #995f39;
+}
+.editor-error {
+  padding: 16px 20px;
+  background: #fcf0eb;
+  border: 1px solid #ddbbae;
+  border-radius: 10px;
+  color: #9f4430;
+  font-size: 14px;
+  margin-bottom: 22px;
+  line-height: 1.6;
+}
+.room-amenities-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.room-amenity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.room-amenity > svg {
+  width: 19px;
+  height: 19px;
+}
+.room-amenity > span {
+  flex: 1;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.room-amenity > strong {
+  font-size: 17px;
+  font-weight: 500;
+}
+.room-amenity.available {
+  background: #f4f8f0;
+  border-color: #d7e3cd;
+  color: #4d6b3a;
+}
+.room-amenity.missing {
+  color: #989087;
+  background: #f7f5f1;
+}
+.room-amenity.missing > strong {
+  color: #b8afa3;
+}
+@media (max-width: 1000px) {
+  .room-editor-layout {
+    grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 20px;
+  }
+  .editor-section {
+    padding: 22px;
+  }
+}
+@media (max-width: 800px) {
+  .room-editor-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .editor-save-panel {
+    position: static;
+  }
+}
+@media (max-width: 580px) {
+  .editor-section {
+    padding: 20px 17px;
+  }
+  .editor-section-heading {
+    gap: 10px;
+  }
+  .editor-section h2 {
+    font-size: 20px;
+  }
+  .editor-section-heading p {
+    font-size: 13px;
+  }
+  .photo-upload-area {
+    padding: 17px;
+  }
+  .photo-upload-area > div {
+    flex-basis: 190px;
+  }
+  .room-editor-form .photo-upload-button {
+    width: 100%;
+  }
+  .editable-photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+  .room-editor-form .amenity-option {
+    font-size: 13px;
+    padding: 12px 9px;
+    gap: 7px;
+  }
+  .room-amenities-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .editor-section-heading > span {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+@media(max-width:580px) { .amenity-checkbox-grid { grid-template-columns: minmax(0,1fr); } }

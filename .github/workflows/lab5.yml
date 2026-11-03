@@ -33,3 +33,64 @@ jobs:
       - name: Build React
         working-directory: client
         run: npm run build
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: booking_lab5
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-database-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_NAME: booking_lab5
+      DB_USER: postgres
+      DB_PASSWORD: ci-database-password
+      JWT_SECRET: ci-only-disposable-secret
+      LAB5_CI: '1'
+      LAB5_EMAIL: ci-admin@example.test
+      LAB5_PASSWORD: ci-admin-password
+      LAB5_USER_EMAIL: ci-user@example.test
+      LAB5_USER_PASSWORD: ci-user-password
+      ROOM_UPLOAD_DIR: ${{ runner.temp }}/booking-test-uploads
+      LAB5_UPLOAD_DIR: ${{ runner.temp }}/booking-test-uploads
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install API dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Migrate isolated PostgreSQL and prepare test accounts
+        run: |
+          npx sequelize-cli db:migrate
+          node scripts/prepare-ci.cjs
+      - name: Start Express
+        run: |
+          node server.js > "$RUNNER_TEMP/booking-server.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/booking-server.pid"
+          for attempt in {1..30}; do
+            status=$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:3000/rooms || true)
+            if [ "$status" = "401" ]; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/booking-server.log"
+          exit 1
+      - name: Check room CRUD and photo uploads
+        run: |
+          node scripts/lab5-smoke-test.mjs
+          node scripts/lab5-upload-test.mjs
+      - name: Stop test server
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/booking-server.pid" ]; then kill "$(cat "$RUNNER_TEMP/booking-server.pid")" || true; fi

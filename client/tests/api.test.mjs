@@ -148,3 +148,31 @@ test("GET отдельного помещения передаёт signal и с�
   globalThis.fetch = async () => json({ error: "Room not found" }, 404);
   await assert.rejects(api.fetchRoom(999), (error) => error.status === 404);
 });
+
+
+test('Загрузка фото отправляет FormData без ручного Content-Type и с JWT', async () => {
+  const { api, storage } = await setup(async (url, options) => {
+    assert.equal(url, 'http://api.test/rooms/photos');
+    assert.equal(options.method, 'POST');
+    assert.equal(options.headers.Authorization, 'Bearer admin-token');
+    assert.equal(options.headers['Content-Type'], undefined);
+    assert.ok(options.body instanceof FormData);
+    assert.equal(options.body.getAll('photos').length, 2);
+    return json({ photos: ['/uploads/rooms/a.jpg', '/uploads/rooms/b.jpg'] }, 201);
+  });
+  storage.set('booking-system-access-token', 'admin-token');
+  const response = await api.uploadRoomPhotos([new File(['one'], 'one.jpg', {type:'image/jpeg'}), new File(['two'], 'two.png', {type:'image/png'})]);
+  assert.equal(response.photos.length, 2);
+  assert.equal(api.photoUrl('/uploads/rooms/a.jpg'), 'http://api.test/uploads/rooms/a.jpg');
+  assert.equal(api.photoUrl('https://example.com/image.jpg'), 'https://example.com/image.jpg');
+});
+
+test('Справочник удобств загружается из API, ошибка 413 объясняет ограничение фото', async () => {
+  const { api } = await setup(async url => {
+    assert.equal(url, 'http://api.test/rooms/amenities');
+    return json([{id:1,label:'Wi-Fi'}]);
+  });
+  assert.deepEqual(await api.fetchAmenities(), [{id:1,label:'Wi-Fi'}]);
+  globalThis.fetch = async () => json({error:'Photo exceeds 5 MB'}, 413);
+  await assert.rejects(api.uploadRoomPhotos([new File(['x'], 'x.jpg')]), error => error.status === 413 && error.message.includes('5 МБ'));
+});

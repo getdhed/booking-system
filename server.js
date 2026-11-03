@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const { uploadDirectory } = require('./services/roomPhotos');
 const { sequelize } = require('./models');
 const bookingRoutes = require('./routes/bookingRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -32,6 +33,8 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+
+app.use('/uploads/rooms', express.static(uploadDirectory, { index: false, setHeaders(res) { res.setHeader('X-Content-Type-Options', 'nosniff'); } }));
 
 app.use('/bookings', bookingRoutes);
 app.use('/users', userRoutes);

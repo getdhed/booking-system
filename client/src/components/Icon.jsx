@@ -1,4 +1,79 @@
 const paths = {
+  image: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="8" cy="8" r="2" />
+      <path d="m3 17 6-6 4 4 3-3 5 5" />
+    </>
+  ),
+  wifi: (
+    <>
+      <path d="M2 8a16 16 0 0 1 20 0M5 12a11 11 0 0 1 14 0m-10 4a5 5 0 0 1 6 0" />
+      <circle cx="12" cy="20" r="1" />
+    </>
+  ),
+  board: (
+    <>
+      <path d="M3 3h18v13H3zm9 13v5m-5 0 5-5 5 5M7 7h10M7 11h6" />
+    </>
+  ),
+  projector: (
+    <>
+      <rect x="3" y="7" width="18" height="11" rx="2" />
+      <circle cx="16" cy="12.5" r="3" />
+      <path d="M6 11h3m-3 4h3M6 18v3m12-3v3" />
+    </>
+  ),
+  chair: (
+    <>
+      <path d="M7 12V4h10v8M4 12h16v6H4zm3 6v4m10-4v4" />
+    </>
+  ),
+  screen: (
+    <>
+      <rect x="3" y="4" width="18" height="13" rx="2" />
+      <path d="M12 17v4m-5 0h10" />
+    </>
+  ),
+  plug: (
+    <>
+      <path d="M8 3v5m8-5v5M5 8h14v4a7 7 0 0 1-14 0zm7 11v3" />
+    </>
+  ),
+  climate: (
+    <>
+      <path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9 4l3 3 3-3m-6 16 3-3 3 3" />
+    </>
+  ),
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1 1m12 12 1 1M5 19l1-1M18 6l1-1" />
+    </>
+  ),
+  window: (
+    <>
+      <path d="M4 3h16v18H4zm8 0v18M4 10h16M7 4v5m10-5v5" />
+    </>
+  ),
+  quiet: (
+    <>
+      <path d="m11 4-5 5H3v6h3l5 5zm4 5 6 6m0-6-6 6" />
+    </>
+  ),
+  water: <path d="M12 2s-7 8-7 13a7 7 0 0 0 14 0C19 10 12 2 12 2Z" />,
+  video: (
+    <>
+      <rect x="3" y="5" width="12" height="14" rx="2" />
+      <path d="m15 10 6-4v12l-6-4" />
+    </>
+  ),
+  access: (
+    <>
+      <circle cx="12" cy="4" r="2" />
+      <path d="M4 9h16m-8-3v8m0 0-5 8m5-8 5 8" />
+    </>
+  ),
   rooms: (
     <>
       <rect x="3" y="3" width="7" height="7" rx="1.5" />

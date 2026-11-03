@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import AccountMenu from "./components/AccountMenu.jsx";
 import Modal from "./components/Modal.jsx";
 import Icon from "./components/Icon.jsx";
-import RoomForm from "./components/RoomForm.jsx";
+import RoomEditorPage from "./components/RoomEditorPage.jsx";
 import RoomPage from "./components/RoomPage.jsx";
 import RoomList from "./components/RoomList.jsx";
 import BookingForm from "./components/BookingForm.jsx";
@@ -30,17 +30,19 @@ export default function App() {
   const [checking, setChecking] = useState(hasSession());
   const [authError, setAuthError] = useState("");
   const activeTab = route === "/bookings" ? "bookings" : "rooms";
-  const roomId = route.match(/^\/rooms\/([^/]+)\/?$/)?.[1] || null;
+  const newRoom = route === "/rooms/new";
+  const editRoomId = route.match(/^\/rooms\/(\d+)\/edit\/?$/)?.[1] || null;
+  const editorOpen = newRoom || Boolean(editRoomId);
+  const roomId = !newRoom
+    ? route.match(/^\/rooms\/([^/]+)\/?$/)?.[1] || null
+    : null;
   const [roomRevision, setRoomRevision] = useState(0);
 
   function setActiveTab(tab) {
     navigate(tab === "bookings" ? "/bookings" : "/");
   }
   function editRoom(room) {
-    setNotice(null);
-    setEditingRoom(room);
-    setDraft(null);
-    setFormOpen(true);
+    navigate("/rooms/" + room.id + "/edit");
   }
   function bookRoom(room) {
     setNotice(null);
@@ -74,7 +76,7 @@ export default function App() {
     const onPopState = () => {
       setRoute(currentRoute());
       setBookingRoom(null);
-      closeForm();
+      setDraft(null);
       setNotice(null);
     };
     window.addEventListener("popstate", onPopState);
@@ -87,7 +89,7 @@ export default function App() {
     setAuthError("");
     setNotice(null);
     setBookingRoom(null);
-    closeForm();
+    setDraft(null);
   }
 
   useEffect(() => {
@@ -108,7 +110,7 @@ export default function App() {
     setRoomType("all");
     setStatus("all");
     setSort("number");
-    closeForm();
+    setDraft(null);
     setBookingRoom(null);
     setDeletingRoom(null);
     navigate("/login");
@@ -125,8 +127,6 @@ export default function App() {
   const [roomType, setRoomType] = useState("all");
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("number");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingRoom, setEditingRoom] = useState(null);
   const [draft, setDraft] = useState(null);
   const [bookingRoom, setBookingRoom] = useState(null);
   const [deletingRoom, setDeletingRoom] = useState(null);
@@ -185,12 +185,6 @@ export default function App() {
         : "Вход — Переговория";
   }, [profile, route]);
 
-  function closeForm() {
-    setEditingRoom(null);
-    setFormOpen(false);
-    setDraft(null);
-  }
-
   function showMutationError(err) {
     setNotice({
       type: "error",
@@ -207,7 +201,7 @@ export default function App() {
       ...previous,
       { ...data, id: tempId, pending: true },
     ]);
-    closeForm();
+    navigate("/");
     try {
       const created = await addRoom(data);
       setRooms((previous) =>
@@ -216,8 +210,8 @@ export default function App() {
       setNotice({ type: "success", message: "Помещение успешно добавлено." });
     } catch (err) {
       setRooms((previous) => previous.filter((room) => room.id !== tempId));
+      navigate("/rooms/new");
       setDraft(data);
-      setFormOpen(true);
       showMutationError(err);
     } finally {
       setMutationPending(false);
@@ -231,7 +225,7 @@ export default function App() {
         room.id === original.id ? { ...room, ...data, pending: true } : room,
       ),
     );
-    closeForm();
+    navigate("/");
     try {
       const updated = await updateRoom(original.id, data);
       setRooms((previous) =>
@@ -243,26 +237,25 @@ export default function App() {
       setRooms((previous) =>
         previous.map((room) => (room.id === original.id ? original : room)),
       );
-      setEditingRoom(original);
+      navigate("/rooms/" + original.id + "/edit");
       setDraft(data);
-      setFormOpen(true);
       showMutationError(err);
     } finally {
       setMutationPending(false);
     }
   }
 
-  function saveRoom(data) {
+  function saveRoom(data, original = null) {
     if (!isAdmin || mutationPending) return false;
     if (
       rooms.some(
         (room) =>
           room.roomNumber.toLowerCase() === data.roomNumber.toLowerCase() &&
-          room.id !== editingRoom?.id,
+          room.id !== original?.id,
       )
     )
       return false;
-    if (editingRoom) void updateOptimistically(editingRoom, data);
+    if (original) void updateOptimistically(original, data);
     else void createOptimistically(data);
     return true;
   }
@@ -420,7 +413,7 @@ export default function App() {
             </div>
           )}
 
-          {activeTab === "rooms" && !roomId && (
+          {activeTab === "rooms" && !roomId && !editorOpen && (
             <>
               <div className="workspace-heading">
                 <div>
@@ -440,12 +433,7 @@ export default function App() {
                   <button
                     className="primary"
                     disabled={mutationPending || loading || Boolean(error)}
-                    onClick={() => {
-                      setNotice(null);
-                      setEditingRoom(null);
-                      setDraft(null);
-                      setFormOpen(true);
-                    }}
+                    onClick={() => navigate("/rooms/new")}
                   >
                     <Icon name="plus" /> Добавить помещение
                   </button>
@@ -708,27 +696,27 @@ export default function App() {
             </>
           )}
 
-          {formOpen && isAdmin && (
-            <Modal
-              title={
-                editingRoom ? "Редактировать помещение" : "Добавить помещение"
-              }
-              onClose={closeForm}
-            >
-              {notice?.type === "error" && (
-                <p className="error" role="alert">
-                  {notice.message}
-                </p>
-              )}
-              <RoomForm
-                key={editingRoom?.id || "new"}
-                room={editingRoom}
-                initialValues={draft}
+          {editorOpen &&
+            (isAdmin ? (
+              <RoomEditorPage
+                key={route + ":" + profile.id}
+                roomId={editRoomId}
+                draft={draft}
                 onSave={saveRoom}
-                onCancel={closeForm}
+                onBack={() => navigate("/")}
+                onCancel={() =>
+                  navigate(editRoomId ? "/rooms/" + editRoomId : "/")
+                }
               />
-            </Modal>
-          )}
+            ) : (
+              <div className="empty" role="alert">
+                <h1>Доступ только администратору</h1>
+                <p>Вы можете просматривать помещения и отправлять заявки.</p>
+                <button className="secondary" onClick={() => navigate("/")}>
+                  Открыть каталог
+                </button>
+              </div>
+            ))}
           {bookingRoom && !isAdmin && (
             <Modal
               title="Новое бронирование"

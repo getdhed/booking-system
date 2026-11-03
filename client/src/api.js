@@ -37,6 +37,8 @@ function httpError(status, responseData) {
     message = "Неверные учётные данные или истёк срок действия сессии.";
   if (status === 403)
     message = "Недостаточно прав: действие доступно только администратору.";
+  if (status === 413)
+    message = "Фото слишком большое. Максимум — 5 МБ на файл.";
   if (status === 404) message = "Помещение или адрес запроса не найден.";
   if (status === 409) {
     message =
@@ -56,8 +58,11 @@ function httpError(status, responseData) {
 
 async function request(path, options = {}) {
   const { method = "GET", body, signal, auth = true, retry = true } = options;
+  const isFormData =
+    typeof FormData !== "undefined" && body instanceof FormData;
   const headers = {};
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (body !== undefined && !isFormData)
+    headers["Content-Type"] = "application/json";
 
   const accessToken = localStorage.getItem(ACCESS_KEY);
   if (auth && accessToken) headers.Authorization = "Bearer " + accessToken;
@@ -67,7 +72,12 @@ async function request(path, options = {}) {
     response = await fetch(API_URL + path, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : isFormData
+            ? body
+            : JSON.stringify(body),
       signal,
     });
   } catch (error) {
@@ -142,6 +152,20 @@ export function getUsers(signal) {
 
 export function fetchRooms(signal) {
   return request("/rooms", { signal });
+}
+
+export function fetchAmenities(signal) {
+  return request("/rooms/amenities", { signal });
+}
+
+export function photoUrl(value) {
+  return value?.startsWith("/uploads/rooms/") ? API_URL + value : value;
+}
+
+export function uploadRoomPhotos(files, signal) {
+  const data = new FormData();
+  files.forEach((file) => data.append("photos", file));
+  return request("/rooms/photos", { method: "POST", body: data, signal });
 }
 
 export function fetchRoom(id, signal) {

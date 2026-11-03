@@ -71,7 +71,7 @@ try {
   createdId = created.id;
   assert.equal(created.imageUrl, room.imageUrl);
   assert.deepEqual(created.galleryUrls, room.galleryUrls);
-  assert.deepEqual(created.amenities, room.amenities);
+  assert.deepEqual([...created.amenities].sort(), [...room.amenities].sort());
   assert.ok(Number.isInteger(createdId) && createdId > 0);
   console.log('✓ POST /rooms, id=' + createdId);
 
@@ -86,7 +86,7 @@ try {
   assert.equal(fetched.capacity, 12);
   assert.equal(fetched.imageUrl, room.imageUrl);
   assert.deepEqual(fetched.galleryUrls, room.galleryUrls);
-  assert.deepEqual(fetched.amenities, room.amenities);
+  assert.deepEqual([...fetched.amenities].sort(), [...room.amenities].sort());
   console.log('✓ GET /rooms/:id после редактирования');
 
   await call('/rooms/' + createdId, {

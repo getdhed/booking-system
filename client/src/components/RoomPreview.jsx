@@ -1,3 +1,4 @@
+import { photoUrl } from "../api.js";
 import { useEffect, useState } from "react";
 
 export default function RoomPreview({ room, priority = false }) {
@@ -11,7 +12,7 @@ export default function RoomPreview({ room, priority = false }) {
   return (
     <div className="room-preview">
       <img
-        src={custom ? room.imageUrl : example}
+        src={custom ? photoUrl(room.imageUrl) : example}
         width="420"
         height="280"
         loading={priority ? "eager" : "lazy"}

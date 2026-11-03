@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchRoom, getErrorMessage } from "../api.js";
+import { fetchRoom, fetchAmenities, getErrorMessage } from "../api.js";
 import RoomGallery from "./RoomGallery.jsx";
 import Icon from "./Icon.jsx";
 
@@ -13,6 +13,7 @@ export default function RoomPage({
   onBook,
 }) {
   const [room, setRoom] = useState(null);
+  const [amenities, setAmenities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [attempt, setAttempt] = useState(0);
@@ -21,9 +22,15 @@ export default function RoomPage({
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    fetchRoom(roomId, controller.signal)
-      .then((data) => {
-        if (!controller.signal.aborted) setRoom(data);
+    Promise.all([
+      fetchRoom(roomId, controller.signal),
+      fetchAmenities(controller.signal),
+    ])
+      .then(([data, options]) => {
+        if (!controller.signal.aborted) {
+          setRoom(data);
+          setAmenities(options);
+        }
       })
       .catch((err) => {
         if (!controller.signal.aborted) setError(err);
@@ -106,20 +113,32 @@ export default function RoomPage({
                 </section>
                 <section className="room-information">
                   <h2>Оснащение и удобства</h2>
-                  {room.amenities?.length ? (
-                    <ul className="amenity-list">
-                      {room.amenities.map((item) => (
-                        <li key={item}>
-                          <Icon name="check" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="muted">
-                      Информация об оснащении пока не указана.
-                    </p>
-                  )}
+                  <div className="room-amenities-grid">
+                    {amenities.map((item) => {
+                      const available =
+                        room.amenityIds?.includes(item.id) ||
+                        room.amenities?.includes(item.label);
+                      return (
+                        <div
+                          key={item.id}
+                          className={
+                            "room-amenity " +
+                            (available ? "available" : "missing")
+                          }
+                          aria-label={
+                            item.label +
+                            (available ? " — есть" : " — не указано")
+                          }
+                        >
+                          <Icon name={item.icon} />
+                          <span>{item.label}</span>
+                          <strong aria-hidden="true">
+                            {available ? "✓" : "−"}
+                          </strong>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </section>
               </div>
               <aside
