@@ -3,6 +3,7 @@ import AccountMenu from "./components/AccountMenu.jsx";
 import Modal from "./components/Modal.jsx";
 import Icon from "./components/Icon.jsx";
 import RoomForm from "./components/RoomForm.jsx";
+import RoomPage from "./components/RoomPage.jsx";
 import RoomList from "./components/RoomList.jsx";
 import BookingForm from "./components/BookingForm.jsx";
 import AuthPage, { Brand } from "./components/AuthPage.jsx";
@@ -20,7 +21,7 @@ import {
 } from "./api.js";
 
 function currentRoute() {
-  return window.location.pathname === "/register" ? "/register" : "/login";
+  return window.location.pathname;
 }
 
 export default function App() {
@@ -28,7 +29,23 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [checking, setChecking] = useState(hasSession());
   const [authError, setAuthError] = useState("");
-  const [activeTab, setActiveTab] = useState("rooms");
+  const activeTab = route === "/bookings" ? "bookings" : "rooms";
+  const roomId = route.match(/^\/rooms\/([^/]+)\/?$/)?.[1] || null;
+  const [roomRevision, setRoomRevision] = useState(0);
+
+  function setActiveTab(tab) {
+    navigate(tab === "bookings" ? "/bookings" : "/");
+  }
+  function editRoom(room) {
+    setNotice(null);
+    setEditingRoom(room);
+    setDraft(null);
+    setFormOpen(true);
+  }
+  function bookRoom(room) {
+    setNotice(null);
+    setBookingRoom(room);
+  }
 
   // Первая страница доступна только после проверки /profile на сервере.
   const loadProfile = useCallback(async () => {
@@ -38,8 +55,10 @@ export default function App() {
       if (!["user", "admin"].includes(user?.role))
         throw new Error("Неизвестная роль аккаунта.");
       setProfile(user);
-      setActiveTab("rooms");
-      window.history.replaceState({}, "", "/");
+      const path = currentRoute();
+      const target = path === "/login" || path === "/register" ? "/" : path;
+      window.history.replaceState({}, "", target);
+      setRoute(target);
       return true;
     } catch (error) {
       setProfile(null);
@@ -52,16 +71,28 @@ export default function App() {
 
   useEffect(() => {
     if (hasSession()) void loadProfile();
-    const onPopState = () => setRoute(currentRoute());
+    const onPopState = () => {
+      setRoute(currentRoute());
+      setBookingRoom(null);
+      closeForm();
+      setNotice(null);
+    };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, [loadProfile]);
 
   function navigate(url) {
-    window.history.pushState({}, "", url);
+    if (window.location.pathname !== url) window.history.pushState({}, "", url);
     setRoute(url);
     setAuthError("");
+    setNotice(null);
+    setBookingRoom(null);
+    closeForm();
   }
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [route]);
 
   async function logout() {
     try {
@@ -206,6 +237,7 @@ export default function App() {
       setRooms((previous) =>
         previous.map((room) => (room.id === original.id ? updated : room)),
       );
+      setRoomRevision((previous) => previous + 1);
       setNotice({ type: "success", message: "Изменения сохранены." });
     } catch (err) {
       setRooms((previous) =>
@@ -264,11 +296,11 @@ export default function App() {
     try {
       await createBooking(data);
       setBookingRoom(null);
+      setActiveTab("bookings");
       setNotice({
         type: "success",
         message: "Заявка создана. Посмотрите её в разделе «Мои бронирования».",
       });
-      setActiveTab("bookings");
     } catch (err) {
       setNotice({ type: "error", message: getErrorMessage(err) });
     } finally {
@@ -388,7 +420,7 @@ export default function App() {
             </div>
           )}
 
-          {activeTab === "rooms" && (
+          {activeTab === "rooms" && !roomId && (
             <>
               <div className="workspace-heading">
                 <div>
@@ -419,29 +451,34 @@ export default function App() {
                   </button>
                 )}
               </div>
-              <div className="stat-grid" aria-label="Сводка каталога">
+              <div
+                className="catalog-summary"
+                role="group"
+                aria-label="Фильтр по доступности"
+              >
                 {[
-                  ["rooms", "Всего помещений", rooms.length],
+                  ["all", "Все помещения", rooms.length],
                   [
-                    "check",
-                    "Доступны для бронирования",
+                    "active",
+                    "Доступны",
                     rooms.filter((r) => r.isActive).length,
                   ],
                   [
-                    "pause",
-                    "Временно недоступны",
+                    "inactive",
+                    "Недоступны",
                     rooms.filter((r) => !r.isActive).length,
                   ],
-                ].map(([icon, label, count]) => (
-                  <div className="stat-card" key={icon}>
-                    <div className={"stat-icon " + icon}>
-                      <Icon name={icon} />
-                    </div>
-                    <div>
-                      <span>{label}</span>
-                      <strong>{loading || error ? "—" : count}</strong>
-                    </div>
-                  </div>
+                ].map(([value, label, count]) => (
+                  <button
+                    key={value}
+                    className={"summary-filter " + value}
+                    aria-pressed={status === value}
+                    disabled={loading || Boolean(error)}
+                    onClick={() => setStatus(value)}
+                  >
+                    {value !== "all" && <i aria-hidden="true" />} {label}{" "}
+                    <strong>{loading || error ? "—" : count}</strong>
+                  </button>
                 ))}
               </div>
               <div className="catalog-layout">
@@ -536,21 +573,13 @@ export default function App() {
                   ) : (
                     <RoomList
                       rooms={filteredRooms}
-                      onEdit={(room) => {
-                        setNotice(null);
-                        setEditingRoom(room);
-                        setDraft(null);
-                        setFormOpen(true);
-                      }}
+                      onEdit={editRoom}
                       onDelete={(room) => setDeletingRoom(room)}
                       canEdit={isAdmin}
                       busy={mutationPending || bookingBusy}
                       hasFilters={filtersApplied}
                       onReset={resetFilters}
-                      onBook={(room) => {
-                        setNotice(null);
-                        setBookingRoom(room);
-                      }}
+                      onOpen={(id) => navigate("/rooms/" + id)}
                     />
                   )}
                 </section>
@@ -561,6 +590,19 @@ export default function App() {
                 </p>
               )}
             </>
+          )}
+
+          {roomId && (
+            <RoomPage
+              key={profile.id + ":" + roomId}
+              roomId={roomId}
+              revision={roomRevision}
+              canEdit={isAdmin}
+              busy={mutationPending || bookingBusy}
+              onBack={() => navigate("/")}
+              onEdit={editRoom}
+              onBook={bookRoom}
+            />
           )}
 
           {activeTab === "bookings" && (

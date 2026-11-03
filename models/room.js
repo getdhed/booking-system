@@ -48,6 +48,18 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true
       },
 
+      galleryUrls: {
+        type: DataTypes.JSONB,
+        allowNull: false,
+        defaultValue: []
+      },
+
+      amenities: {
+        type: DataTypes.JSONB,
+        allowNull: false,
+        defaultValue: []
+      },
+
       imageUrl: {
         type: DataTypes.STRING(2048),
         allowNull: true

@@ -8,6 +8,14 @@ export default function BookingForm({ room, onCancel, onCreate, busy }) {
     attendeeCount: "1",
   });
   const [error, setError] = useState("");
+  const start = new Date(form.startTime);
+  const end = new Date(form.endTime);
+  const duration =
+    Number.isFinite(start.getTime()) &&
+    Number.isFinite(end.getTime()) &&
+    end > start
+      ? Math.round((end - start) / 60000)
+      : null;
 
   function change(event) {
     setForm((previous) => ({
@@ -120,6 +128,20 @@ export default function BookingForm({ room, onCancel, onCreate, busy }) {
             />
           </label>
         </fieldset>
+        <div className="booking-selection" role="status">
+          {duration ? (
+            <>
+              Продолжительность:{" "}
+              {duration >= 60 ? Math.floor(duration / 60) + " ч " : ""}
+              {duration % 60 ? (duration % 60) + " мин" : ""} · Участников:{" "}
+              {form.attendeeCount || "—"}
+            </>
+          ) : (
+            "Выберите время начала и окончания встречи."
+          )}
+          <br />
+          <small>Время указано по часовому поясу вашего устройства.</small>
+        </div>
         {error && (
           <p className="error" role="alert">
             {error}

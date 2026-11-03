@@ -7,7 +7,7 @@ export default function RoomList({
   onDelete,
   canEdit,
   busy,
-  onBook,
+  onOpen,
   hasFilters,
   onReset,
 }) {
@@ -54,7 +54,30 @@ export default function RoomList({
                   {room.isActive ? "Доступно" : "Недоступно"}
                 </span>
               </div>
-              <h3>{room.name}</h3>
+              <h3>
+                {room.pending ? (
+                  room.name
+                ) : (
+                  <a
+                    className="room-link"
+                    href={"/rooms/" + room.id}
+                    onClick={(event) => {
+                      if (
+                        event.button === 0 &&
+                        !event.ctrlKey &&
+                        !event.metaKey &&
+                        !event.shiftKey &&
+                        !event.altKey
+                      ) {
+                        event.preventDefault();
+                        onOpen(room.id);
+                      }
+                    }}
+                  >
+                    {room.name}
+                  </a>
+                )}
+              </h3>
               <p className="room-location">
                 <Icon name="pin" />
                 {room.location} · {room.floor} этаж
@@ -89,13 +112,9 @@ export default function RoomList({
                     </button>
                   </>
                 ) : (
-                  <button
-                    className="primary"
-                    disabled={busy || room.pending || !room.isActive}
-                    onClick={() => onBook(room)}
-                  >
-                    {room.isActive ? "Забронировать" : "Недоступно"}
-                  </button>
+                  <span className="room-more">
+                    Подробнее <span aria-hidden="true">→</span>
+                  </span>
                 )}
               </div>
             </div>

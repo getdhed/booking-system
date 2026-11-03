@@ -35,6 +35,8 @@ const room = {
   capacity: 10,
   description: 'Создана автоматическим тестом; будет удалена',
   imageUrl: 'https://example.com/test-room.jpg',
+  galleryUrls: ['https://example.com/room-second.jpg'],
+  amenities: ['Проектор', 'Доска'],
   isActive: true
 };
 
@@ -60,12 +62,16 @@ try {
 
   await call('/rooms', { method: 'POST', token, body: { ...room, imageUrl: 'javascript:alert(1)' }, expectedStatus: 400 });
   console.log('✓ Недопустимый протокол ссылки на фото отклонён');
+  await call('/rooms', { method: 'POST', token, body: { ...room, galleryUrls: ['javascript:alert(1)'] }, expectedStatus: 400 });
+  await call('/rooms', { method: 'POST', token, body: { ...room, amenities: [42] }, expectedStatus: 400 });
 
   const created = await call('/rooms', {
     method: 'POST', body: room, token, expectedStatus: 201
   });
   createdId = created.id;
   assert.equal(created.imageUrl, room.imageUrl);
+  assert.deepEqual(created.galleryUrls, room.galleryUrls);
+  assert.deepEqual(created.amenities, room.amenities);
   assert.ok(Number.isInteger(createdId) && createdId > 0);
   console.log('✓ POST /rooms, id=' + createdId);
 
@@ -79,6 +85,8 @@ try {
   const fetched = await call('/rooms/' + createdId, { token });
   assert.equal(fetched.capacity, 12);
   assert.equal(fetched.imageUrl, room.imageUrl);
+  assert.deepEqual(fetched.galleryUrls, room.galleryUrls);
+  assert.deepEqual(fetched.amenities, room.amenities);
   console.log('✓ GET /rooms/:id после редактирования');
 
   await call('/rooms/' + createdId, {

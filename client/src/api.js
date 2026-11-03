@@ -144,6 +144,10 @@ export function fetchRooms(signal) {
   return request("/rooms", { signal });
 }
 
+export function fetchRoom(id, signal) {
+  return request("/rooms/" + encodeURIComponent(id), { signal });
+}
+
 export function addRoom(room) {
   return request("/rooms", { method: "POST", body: room });
 }

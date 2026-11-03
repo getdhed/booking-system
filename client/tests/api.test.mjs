@@ -128,3 +128,23 @@ test("отклонённый refresh очищает сессию и не зац�
   assert.equal(api.hasSession(), false);
   assert.equal(storage.has("booking-system-refresh-token"), false);
 });
+
+test("GET отдельного помещения передаёт signal и сохраняет 404", async () => {
+  const controller = new AbortController();
+  const { api } = await setup(async (url, options) => {
+    assert.equal(url, "http://api.test/rooms/42");
+    assert.equal(options.signal, controller.signal);
+    return json({
+      id: 42,
+      name: "Переговорная",
+      galleryUrls: [],
+      amenities: ["Доска"],
+    });
+  });
+  assert.equal(
+    (await api.fetchRoom(42, controller.signal)).name,
+    "Переговорная",
+  );
+  globalThis.fetch = async () => json({ error: "Room not found" }, 404);
+  await assert.rejects(api.fetchRoom(999), (error) => error.status === 404);
+});

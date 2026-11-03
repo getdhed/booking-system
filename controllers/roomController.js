@@ -15,27 +15,33 @@ function normalizeRoom(body) {
   const location = typeof body.location === 'string' ? body.location.trim() : '';
   const description = body.description == null ? '' : body.description;
   const imageUrl = body.imageUrl == null || body.imageUrl === '' ? null : body.imageUrl;
-  if (imageUrl !== null) {
-    if (typeof imageUrl !== 'string' || imageUrl.length > 2048) return null;
+  const validImage = value => {
+    if (typeof value !== 'string' || value.length > 2048) return false;
     try {
-      const url = new URL(imageUrl);
-      if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
-    } catch { return null; }
-  }
+      const url = new URL(value);
+      return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password;
+    } catch { return false; }
+  };
+  if (imageUrl !== null && !validImage(imageUrl)) return null;
+  const galleryUrls = body.galleryUrls == null ? [] : body.galleryUrls;
+  const amenities = body.amenities == null ? [] : body.amenities;
+  if (!Array.isArray(galleryUrls) || galleryUrls.length > 8 || !galleryUrls.every(validImage)) return null;
+  if (!Array.isArray(amenities) || amenities.length > 12 ||
+      !amenities.every(value => typeof value === 'string' && value.trim() && value.length <= 80)) return null;
   const floor = body.floor;
   const capacity = body.capacity;
 
   if (!name || name.length > 100 ||
       !roomNumber || roomNumber.length > 20 ||
       !location || location.length > 150 ||
-      typeof description !== 'string' || description.length > 500 ||
+      typeof description !== 'string' || description.length > 2000 ||
       !Number.isInteger(floor) || floor < 0 ||
       !Number.isInteger(capacity) || capacity < 1 ||
       typeof body.isActive !== 'boolean') {
     return null;
   }
 
-  return { name, roomNumber, location, floor, capacity, description, imageUrl, isActive: body.isActive };
+  return { name, roomNumber, location, floor, capacity, description, imageUrl, galleryUrls: [...new Set(galleryUrls)], amenities: [...new Set(amenities.map(value => value.trim()))], isActive: body.isActive };
 }
 
 async function getAllRooms(req, res, next) {
