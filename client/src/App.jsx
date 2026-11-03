@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import AccountMenu from "./components/AccountMenu.jsx";
 import Modal from "./components/Modal.jsx";
 import Icon from "./components/Icon.jsx";
 import RoomForm from "./components/RoomForm.jsx";
@@ -14,17 +15,12 @@ import {
   updateRoom,
   deleteRoom,
   getMyBookings,
-  getUsers,
   createBooking,
   signOut,
 } from "./api.js";
 
 function currentRoute() {
   return window.location.pathname === "/register" ? "/register" : "/login";
-}
-
-function roleLabel(role) {
-  return role === "admin" ? "Администратор" : "Пользователь";
 }
 
 export default function App() {
@@ -76,7 +72,6 @@ export default function App() {
     setProfile(null);
     setRooms([]);
     setBookings([]);
-    setUsers([]);
     setNotice(null);
     setSearch("");
     setRoomType("all");
@@ -109,9 +104,6 @@ export default function App() {
   const [bookings, setBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [bookingsError, setBookingsError] = useState("");
-  const [users, setUsers] = useState([]);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [usersError, setUsersError] = useState("");
 
   const isAdmin = profile?.role === "admin";
 
@@ -150,24 +142,9 @@ export default function App() {
     }
   }, []);
 
-  const loadUsers = useCallback(async () => {
-    setUsersLoading(true);
-    setUsersError("");
-    try {
-      const data = await getUsers();
-      setUsers(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setUsersError(getErrorMessage(err));
-    } finally {
-      setUsersLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    if (!profile) return;
-    if (activeTab === "bookings") void loadBookings();
-    if (activeTab === "users" && isAdmin) void loadUsers();
-  }, [profile?.id, activeTab, isAdmin, loadBookings, loadUsers]);
+    if (profile && activeTab === "bookings") void loadBookings();
+  }, [profile?.id, activeTab, loadBookings]);
 
   useEffect(() => {
     document.title = profile
@@ -388,44 +365,10 @@ export default function App() {
               onClick={() => setActiveTab("bookings")}
             >
               <Icon name="calendar" />
-              {isAdmin ? "Бронирования" : "Мои бронирования"}
-            </button>
-            {isAdmin && (
-              <button
-                className={
-                  "nav-link " + (activeTab === "users" ? "selected" : "")
-                }
-                aria-current={activeTab === "users" ? "page" : undefined}
-                onClick={() => setActiveTab("users")}
-              >
-                <Icon name="users" />
-                Пользователи
-              </button>
-            )}
-            <button
-              className={
-                "nav-link " + (activeTab === "profile" ? "selected" : "")
-              }
-              aria-current={activeTab === "profile" ? "page" : undefined}
-              onClick={() => setActiveTab("profile")}
-            >
-              <Icon name="user" />
-              Профиль
+              Мои бронирования
             </button>
           </nav>
-          <div className="site-account">
-            <div className="avatar account-avatar" aria-hidden="true">
-              {profile.fullName?.charAt(0)?.toUpperCase()}
-            </div>
-            <div className="account-copy">
-              <strong>{profile.fullName}</strong>
-              <span>{roleLabel(profile.role)}</span>
-            </div>
-            <button type="button" className="logout-button" onClick={logout}>
-              <Icon name="logout" />
-              Выйти
-            </button>
-          </div>
+          <AccountMenu profile={profile} onLogout={logout} />
         </div>
       </header>
       <div className="dashboard-main">
@@ -723,106 +666,6 @@ export default function App() {
             </>
           )}
 
-          {activeTab === "users" && isAdmin && (
-            <>
-              <div className="workspace-heading">
-                <div>
-                  <span className="section-eyebrow">АДМИНИСТРИРОВАНИЕ</span>
-                  <h1>Пользователи</h1>
-                  <p>Зарегистрированные аккаунты и их роли в системе.</p>
-                </div>
-                <button
-                  className="secondary"
-                  disabled={usersLoading}
-                  onClick={loadUsers}
-                >
-                  <Icon name="refresh" />
-                  Обновить
-                </button>
-              </div>
-              {usersLoading ? (
-                <div className="loading-panel" role="status">
-                  <span className="spinner" />
-                  Загрузка...
-                </div>
-              ) : usersError ? (
-                <div className="loading-panel" role="alert">
-                  <p className="error">{usersError}</p>
-                  <button className="secondary" onClick={loadUsers}>
-                    Повторить
-                  </button>
-                </div>
-              ) : (
-                <div className="data-table-wrap">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Имя</th>
-                        <th>Почта</th>
-                        <th>Роль</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((user) => (
-                        <tr key={user.id}>
-                          <td>#{user.id}</td>
-                          <td>{user.fullName}</td>
-                          <td>{user.email}</td>
-                          <td>
-                            <span className="table-status">
-                              {roleLabel(user.role)}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
-          )}
-
-          {activeTab === "profile" && (
-            <>
-              <div className="workspace-heading">
-                <div>
-                  <span className="section-eyebrow">ЛИЧНЫЙ КАБИНЕТ</span>
-                  <h1>Мой профиль</h1>
-                  <p>Информация вашей учётной записи.</p>
-                </div>
-              </div>
-              <section className="profile-panel">
-                <div className="profile-head">
-                  <div className="avatar avatar-large">
-                    {profile.fullName?.charAt(0)?.toUpperCase() || "U"}
-                  </div>
-                  <div>
-                    <h2>{profile.fullName}</h2>
-                    <span
-                      className={"role-pill " + (isAdmin ? "role-admin" : "")}
-                    >
-                      {roleLabel(profile.role)}
-                    </span>
-                  </div>
-                </div>
-                <div className="profile-fields">
-                  <div>
-                    <span>Электронная почта</span>
-                    <strong>{profile.email}</strong>
-                  </div>
-                  <div>
-                    <span>Идентификатор аккаунта</span>
-                    <strong>#{profile.id}</strong>
-                  </div>
-                  <div>
-                    <span>Уровень доступа</span>
-                    <strong>{roleLabel(profile.role)}</strong>
-                  </div>
-                </div>
-              </section>
-            </>
-          )}
           {formOpen && isAdmin && (
             <Modal
               title={

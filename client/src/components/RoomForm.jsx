@@ -1,3 +1,4 @@
+import RoomPreview from "./RoomPreview.jsx";
 import { useEffect, useState } from "react";
 
 const emptyRoom = {
@@ -7,6 +8,7 @@ const emptyRoom = {
   floor: "1",
   capacity: "1",
   description: "",
+  imageUrl: "",
   isActive: true,
 };
 
@@ -21,6 +23,7 @@ export default function RoomForm({ room, initialValues, onSave, onCancel }) {
         ? {
             ...emptyRoom,
             ...source,
+            imageUrl: source.imageUrl || "",
             floor: String(source.floor),
             capacity: String(source.capacity),
           }
@@ -47,6 +50,7 @@ export default function RoomForm({ room, initialValues, onSave, onCancel }) {
       roomNumber: form.roomNumber.trim(),
       location: form.location.trim(),
       description: form.description.trim(),
+      imageUrl: form.imageUrl.trim() || null,
       floor: Number(form.floor),
       capacity: Number(form.capacity),
       isActive: form.isActive,
@@ -158,6 +162,22 @@ export default function RoomForm({ room, initialValues, onSave, onCancel }) {
         </label>
       </div>
 
+      <label className="image-url-field">
+        Ссылка на фото
+        <input
+          name="imageUrl"
+          type="url"
+          pattern="https?://.+"
+          maxLength={2048}
+          value={form.imageUrl}
+          onChange={updateField}
+          placeholder="https://example.com/room.jpg"
+        />
+        <small className="muted">
+          Необязательно. Без фото показывается пример интерьера.
+        </small>
+      </label>
+      <RoomPreview room={{ ...form, imageUrl: form.imageUrl.trim() }} />
       <label>
         Описание
         <textarea

@@ -14,6 +14,14 @@ function normalizeRoom(body) {
   const roomNumber = typeof body.roomNumber === 'string' ? body.roomNumber.trim() : '';
   const location = typeof body.location === 'string' ? body.location.trim() : '';
   const description = body.description == null ? '' : body.description;
+  const imageUrl = body.imageUrl == null || body.imageUrl === '' ? null : body.imageUrl;
+  if (imageUrl !== null) {
+    if (typeof imageUrl !== 'string' || imageUrl.length > 2048) return null;
+    try {
+      const url = new URL(imageUrl);
+      if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
+    } catch { return null; }
+  }
   const floor = body.floor;
   const capacity = body.capacity;
 
@@ -27,7 +35,7 @@ function normalizeRoom(body) {
     return null;
   }
 
-  return { name, roomNumber, location, floor, capacity, description, isActive: body.isActive };
+  return { name, roomNumber, location, floor, capacity, description, imageUrl, isActive: body.isActive };
 }
 
 async function getAllRooms(req, res, next) {

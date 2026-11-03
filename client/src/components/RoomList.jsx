@@ -1,3 +1,4 @@
+import RoomPreview from "./RoomPreview.jsx";
 import Icon from "./Icon.jsx";
 
 export default function RoomList({
@@ -37,59 +38,66 @@ export default function RoomList({
           key={room.id}
           className={"room-card" + (room.pending ? " pending-card" : "")}
         >
-          <div className="room-details">
-            <div className="card-top">
-              <span className="room-number">ПОМЕЩЕНИЕ № {room.roomNumber}</span>
-              <span
-                className={"status " + (room.isActive ? "active" : "inactive")}
-              >
-                <i />
-                {room.isActive ? "Доступно" : "Недоступно"}
-              </span>
-            </div>
-            <h3>{room.name}</h3>
-            <p className="room-location">
-              <Icon name="pin" />
-              {room.location} · {room.floor} этаж
-            </p>
-            <p className="description">
-              {room.description || "Дополнительное описание не указано."}
-            </p>
-          </div>
-          <div className="room-footer">
-            <span className="room-capacity">
-              <Icon name="users" />
-              До {room.capacity} чел.
-            </span>
-            <div className="card-actions">
-              {canEdit ? (
-                <>
-                  <button
-                    className="secondary"
-                    onClick={() => onEdit(room)}
-                    disabled={busy || room.pending}
-                  >
-                    <Icon name="edit" />
-                    Изменить
-                  </button>
-                  <button
-                    className="danger delete-button"
-                    aria-label={"Удалить помещение " + room.roomNumber}
-                    onClick={() => onDelete(room)}
-                    disabled={busy || room.pending}
-                  >
-                    <Icon name="trash" />
-                  </button>
-                </>
-              ) : (
-                <button
-                  className="primary"
-                  disabled={busy || room.pending || !room.isActive}
-                  onClick={() => onBook(room)}
+          <RoomPreview room={room} />
+          <div className="room-card-content">
+            <div className="room-details">
+              <div className="card-top">
+                <span className="room-number">
+                  ПОМЕЩЕНИЕ № {room.roomNumber}
+                </span>
+                <span
+                  className={
+                    "status " + (room.isActive ? "active" : "inactive")
+                  }
                 >
-                  {room.isActive ? "Забронировать" : "Недоступно"}
-                </button>
-              )}
+                  <i />
+                  {room.isActive ? "Доступно" : "Недоступно"}
+                </span>
+              </div>
+              <h3>{room.name}</h3>
+              <p className="room-location">
+                <Icon name="pin" />
+                {room.location} · {room.floor} этаж
+              </p>
+              <p className="description">
+                {room.description || "Дополнительное описание не указано."}
+              </p>
+            </div>
+            <div className="room-footer">
+              <span className="room-capacity">
+                <Icon name="users" />
+                До {room.capacity} чел.
+              </span>
+              <div className="card-actions">
+                {canEdit ? (
+                  <>
+                    <button
+                      className="secondary"
+                      onClick={() => onEdit(room)}
+                      disabled={busy || room.pending}
+                    >
+                      <Icon name="edit" />
+                      Изменить
+                    </button>
+                    <button
+                      className="danger delete-button"
+                      aria-label={"Удалить помещение " + room.roomNumber}
+                      onClick={() => onDelete(room)}
+                      disabled={busy || room.pending}
+                    >
+                      <Icon name="trash" />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="primary"
+                    disabled={busy || room.pending || !room.isActive}
+                    onClick={() => onBook(room)}
+                  >
+                    {room.isActive ? "Забронировать" : "Недоступно"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           {room.pending && (

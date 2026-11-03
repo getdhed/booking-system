@@ -34,6 +34,7 @@ const room = {
   floor: 1,
   capacity: 10,
   description: 'Создана автоматическим тестом; будет удалена',
+  imageUrl: 'https://example.com/test-room.jpg',
   isActive: true
 };
 
@@ -57,10 +58,14 @@ try {
   assert.ok(Array.isArray(initialRooms), 'GET /rooms должен вернуть массив');
   console.log('✓ Авторизация и GET /rooms с JWT');
 
+  await call('/rooms', { method: 'POST', token, body: { ...room, imageUrl: 'javascript:alert(1)' }, expectedStatus: 400 });
+  console.log('✓ Недопустимый протокол ссылки на фото отклонён');
+
   const created = await call('/rooms', {
     method: 'POST', body: room, token, expectedStatus: 201
   });
   createdId = created.id;
+  assert.equal(created.imageUrl, room.imageUrl);
   assert.ok(Number.isInteger(createdId) && createdId > 0);
   console.log('✓ POST /rooms, id=' + createdId);
 
@@ -68,10 +73,12 @@ try {
     method: 'PUT', body: { ...room, capacity: 12 }, token
   });
   assert.equal(updated.capacity, 12);
+  assert.equal(updated.imageUrl, room.imageUrl);
   console.log('✓ PUT /rooms/:id');
 
   const fetched = await call('/rooms/' + createdId, { token });
   assert.equal(fetched.capacity, 12);
+  assert.equal(fetched.imageUrl, room.imageUrl);
   console.log('✓ GET /rooms/:id после редактирования');
 
   await call('/rooms/' + createdId, {

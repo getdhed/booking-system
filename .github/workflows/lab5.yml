@@ -19,6 +19,8 @@ jobs:
         run: |
           node --check server.js
           node --check controllers/roomController.js
+          node --check models/room.js
+          node --check migrations/20261103150000-add-room-image-url.js
           node --check controllers/bookingController.js
           node --check routes/roomRoutes.js
           node --check scripts/lab5-smoke-test.mjs
