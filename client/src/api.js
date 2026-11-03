@@ -29,7 +29,7 @@ function httpError(status, responseData) {
 
   if (status === 400) message = 'Сервер отклонил данные. Проверьте поля формы.';
   if (status === 401) message = 'Неверные учётные данные или истёк срок действия сессии.';
-  if (status === 403) message = 'Недостаточно прав для этой операции.';
+  if (status === 403) message = 'Недостаточно прав: действие доступно только администратору.';
   if (status === 404) message = 'Помещение или адрес запроса не найден.';
   if (status === 409) {
     message = serverMessage === 'Room has bookings and cannot be deleted'
@@ -100,6 +100,22 @@ async function request(path, options = {}) {
 
   if (response.status === 204) return null;
   return response.json();
+}
+
+export function getProfile(signal) {
+  return request('/profile', { signal });
+}
+
+export function registerAccount(data) {
+  return request('/auth/register', { method: 'POST', body: data, auth: false });
+}
+
+export function getMyBookings(signal) {
+  return request('/bookings', { signal });
+}
+
+export function getUsers(signal) {
+  return request('/users', { signal });
 }
 
 export function fetchRooms(signal) {
