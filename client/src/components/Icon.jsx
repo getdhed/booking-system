@@ -1,4 +1,5 @@
 const paths = {
+  message: <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-2 2V11.5a9.5 9.5 0 0 1 19 0ZM7 9h10M7 14h7" />,
   image: (
     <>
       <rect x="3" y="3" width="18" height="18" rx="2" />

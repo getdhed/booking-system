@@ -1,6 +1,8 @@
 require('dotenv').config();
 
 const express = require('express');
+const http = require('http');
+const { attachSupportChat } = require('./services/supportChat');
 const { uploadDirectory } = require('./services/roomPhotos');
 const { sequelize } = require('./models');
 const bookingRoutes = require('./routes/bookingRoutes');
@@ -11,7 +13,8 @@ const errorHandler = require('./middlewares/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+const server = http.createServer(app);
 
 // Разрешаем запросы из Vite во время локальной разработки.
 // Для другого адреса фронтенда задайте CLIENT_ORIGINS через .env.
@@ -20,6 +23,7 @@ const allowedOrigins = new Set(
     .split(',')
     .map(origin => origin.trim())
 );
+attachSupportChat(server, { allowedOrigins });
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && allowedOrigins.has(origin)) {
@@ -49,7 +53,7 @@ async function startServer() {
   try {
     await sequelize.authenticate();
     console.log('бд подключена!');
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`сервер запущен на http://localhost:${port}`);
     });
   } catch (error) {

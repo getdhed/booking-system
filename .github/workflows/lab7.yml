@@ -1,0 +1,48 @@
+name: Lab 7 chat validation
+
+on:
+  push:
+    branches: ['27']
+  workflow_dispatch:
+
+jobs:
+  chat:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: booking_lab7
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_NAME: booking_lab7
+      DB_USER: postgres
+      DB_PASSWORD: ci-only-password
+      JWT_SECRET: ci-only-disposable-lab7-secret
+      LAB7_TEST: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - name: Apply migrations
+        run: npx sequelize-cli db:migrate
+      - name: Socket.IO integration tests
+        run: npm run test:chat
+      - name: Install client
+        run: npm ci --prefix client --no-audit --no-fund
+      - name: Client tests and production build
+        run: |
+          npm test --prefix client
+          npm run build --prefix client

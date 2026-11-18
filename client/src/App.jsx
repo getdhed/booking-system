@@ -7,6 +7,7 @@ import RoomPage from "./components/RoomPage.jsx";
 import RoomList from "./components/RoomList.jsx";
 import BookingForm from "./components/BookingForm.jsx";
 import BookingWorkspace from "./components/BookingWorkspace.jsx";
+import SupportChat from "./components/SupportChat.jsx";
 import AuthPage, { Brand } from "./components/AuthPage.jsx";
 import {
   hasSession,
@@ -29,7 +30,7 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [checking, setChecking] = useState(hasSession());
   const [authError, setAuthError] = useState("");
-  const activeTab = route === "/bookings" ? "bookings" : "rooms";
+  const activeTab = route === "/messages" ? "messages" : route === "/bookings" ? "bookings" : "rooms";
   const newRoom = route === "/rooms/new";
   const editRoomId = route.match(/^\/rooms\/(\d+)\/edit\/?$/)?.[1] || null;
   const editorOpen = newRoom || Boolean(editRoomId);
@@ -39,7 +40,7 @@ export default function App() {
   const [roomRevision, setRoomRevision] = useState(0);
 
   function setActiveTab(tab) {
-    navigate(tab === "bookings" ? "/bookings" : "/");
+    navigate(tab === "messages" ? "/messages" : tab === "bookings" ? "/bookings" : "/");
   }
   function editRoom(room) {
     navigate("/rooms/" + room.id + "/edit");
@@ -371,6 +372,11 @@ export default function App() {
               <Icon name="calendar" />
               {isAdmin ? "Заявки и бронирования" : "Мои бронирования"}
             </button>
+            <button className={"nav-link " + (activeTab === "messages" ? "selected" : "")}
+              aria-current={activeTab === "messages" ? "page" : undefined}
+              onClick={() => setActiveTab("messages")}>
+              <Icon name="message" /> Сообщения
+            </button>
           </nav>
           <AccountMenu profile={profile} onLogout={logout} />
         </div>
@@ -576,6 +582,8 @@ export default function App() {
             <BookingWorkspace key={profile.id} isAdmin={isAdmin} rooms={rooms}
               roomsLoading={loading} roomsError={error} reloadRooms={loadRooms} />
           )}
+
+          {activeTab === "messages" && <SupportChat key={profile.id} profile={profile} />}
 
           {editorOpen &&
             (isAdmin ? (

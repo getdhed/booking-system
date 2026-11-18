@@ -7,6 +7,15 @@ const REFRESH_KEY = "booking-system-refresh-token";
 
 let pendingRefresh = null;
 
+export function getChatConnection() {
+  const api = new URL(API_URL, window.location.origin);
+  return {
+    url: api.origin,
+    path: api.pathname.replace(/\/$/, '') + '/socket.io',
+    token: localStorage.getItem(ACCESS_KEY),
+  };
+}
+
 export function hasSession() {
   return Boolean(localStorage.getItem(ACCESS_KEY));
 }
